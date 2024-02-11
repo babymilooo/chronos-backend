@@ -35,6 +35,19 @@ class APIService {
         }
     }
 
+    async getRandomUsername() {
+        try {
+            const response = await requestGet({
+                url: 'https://api.namefake.com/'
+            });
+            console.log(response.body);
+            return JSON.parse(response.body);
+        } catch (error) {
+            console.error(error);
+            throw error;
+        }
+    }
+
 }
 
 module.exports = new APIService();
