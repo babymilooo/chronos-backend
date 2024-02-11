@@ -17,7 +17,7 @@ class AuthService {
         const hashedPassword = await bcrypt.hash(password, 6);
         const user = await userModel.create({ password: hashedPassword, email });
         const userDto = new UserDto(user);
-        const tokens = await tokenService.generateTokens({ ...userDto });
+        const tokens = tokenService.generateTokens({ ...userDto });
         await tokenService.saveToken(userDto.id, tokens.refreshToken);
         await EmailsService.sendActivationMail(userDto.email, `${process.env.API_URL}/api/activate/${tokens.activationToken}`);
 
@@ -72,7 +72,9 @@ class AuthService {
     }
 
     async activate(activationLink) {
-        const user = await userModel.findOne({ activationLink });
+        const userData = tokenService.validateActivationToken(activationLink);
+        const { email } = userData;
+        const user = await userModel.findOne({ email });
 
         if (!user) {
             throw ApiError.BadRequest(`Incorrect activation link`);
