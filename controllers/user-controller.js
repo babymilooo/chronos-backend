@@ -28,14 +28,6 @@ class UserController {
         }
     }
 
-    async login(req, res, next) {
-        try {
-
-        } catch (error) {
-
-        }
-    }
-
     async refresh(req, res, next) {
         try {
 
