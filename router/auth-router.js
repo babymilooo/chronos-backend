@@ -1,4 +1,5 @@
-const userController = require('../controllers/user-controller');
+const userController = require('../controllers/auth-controller');
+const authMiddleware = require('../middlewares/auth-middleware');
 
 const Router = require('express').Router;
 
@@ -13,7 +14,7 @@ router.post('/registration',
 );
 
 router.post('/login', userController.login);
-router.post('/logout', userController.logout);
+router.post('/logout', authMiddleware, userController.logout);
 router.get('/activate/:link');
 router.get('/refresh', userController.refresh);
 
