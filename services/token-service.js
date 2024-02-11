@@ -27,6 +27,16 @@ class TokenService {
             throw new Error('Database error: ' + error.message);
         }
     }
+
+    async removeToken(refreshToken) {
+        const tokenData = await tokenModel.deleteOne({ refreshToken });
+        return tokenData;
+    }
+
+    async findToken(refreshToken) {
+        const tokenData = await tokenModel.findOne({ refreshToken });
+        return tokenData;
+    }
 }
 
 module.exports = new TokenService();
