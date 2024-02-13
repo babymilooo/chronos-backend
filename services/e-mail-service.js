@@ -1,4 +1,4 @@
-const fs = require('fs');
+const fs = require('fs').promises;
 const path = require('path');
 const nodemailer = require('nodemailer');
 
@@ -32,62 +32,55 @@ const styles = `
 `;
 
 class MailService {
-    
     constructor() {
         this.transporter = nodemailer.createTransport({
             host: process.env.SMTP_HOST,
             port: process.env.SMTP_PORT,
-            security: true,
             auth: {
                 user: process.env.SMTP_USER,
-                pass: process.env.SMTP_APP_PASS
-            }
+                pass: process.env.SMTP_APP_PASS,
+            },
         });
     }
 
-    async sendMail(toEmail, subject, htmlContent) {
+    async sendEmail({ toEmail, subject, contentAction, link }) {
+        const htmlContent = this.generateEmailHtml(subject, contentAction, link);
         try {
             const info = await this.transporter.sendMail({
-                from: {
-                    name: "CHRONOS",
-                    address: process.env.SMTP_USER
-                },
+                from: `"CHRONOS" <${process.env.SMTP_USER}>`,
                 to: toEmail,
                 subject: subject,
                 html: htmlContent,
-                headers: {
-                    'Content-Type': 'text/html; charset=utf-8',
-                }
+                headers: { 'Content-Type': 'text/html; charset=utf-8' },
             });
 
-            const logMessage = `<log>\n<type>Success</type>\n<subject>${subject}</subject>\n<to>${toEmail}</to>\n<response>${info.response}</response>\n<time>${new Date().toISOString()}</time>\n</log>\n`;
-            console.log(logMessage);
-    
-            const logFileName = `emailService${new Date().toISOString().split('T')[0]}.log`;
-            const logFilePath = path.join(__dirname, 'logs', 'e-mails', logFileName);
-    
-            fs.appendFile(logFilePath, logMessage, (err) => {
-                if (err) console.error(`Failed to write log: ${err.message}`);
-            });
-    
+            this.log({ type: 'Success', action: contentAction, subject, to: toEmail, response: info.response });
         } catch (error) {
-            const errorMessage = `<log>\n<type>Error</type>\n<subject>${subject}</subject>\n<to>${toEmail}</to>\n<error>${error.message}</error>\n<time>${new Date().toISOString()}</time>\n</log>\n`;
-            console.error(errorMessage);
-    
-            const logFileName = `emailService${new Date().toISOString().split('T')[0]}.log`;
-            const logFilePath = path.join(__dirname, 'logs', 'e-mails', logFileName);
-    
-            fs.appendFile(logFilePath, errorMessage, (err) => {
-                if (err) console.error(`Failed to write log: ${err.message}`);
-            });
-    
+            this.log({ type: 'Error', action: contentAction, subject, to: toEmail, error: error.message });
             throw error;
         }
     }
-    
+
     async sendActivationMail(toEmail, activationLink) {
-        const subject = 'CHRONOS Account Activation';
-        const htmlContent = `
+        await this.sendEmail({
+            toEmail,
+            subject: 'CHRONOS Account Activation',
+            contentAction: 'SendActivationMail',
+            link: activationLink,
+        });
+    }
+
+    async sendPasswordResetMail(toEmail, resetPasswordPageLink) {
+        await this.sendEmail({
+            toEmail,
+            subject: 'Password Reset - CHRONOS',
+            contentAction: 'SendPasswordResetMail',
+            link: resetPasswordPageLink,
+        });
+    }
+
+    generateEmailHtml(subject, action, link) {
+        return `
             <html>
             <head>
                 <style>${styles}</style>
@@ -97,34 +90,26 @@ class MailService {
                 <div class="email-container">
                     <h1>${subject}</h1>
                     <p>Dear CHRONOS user,</p>
-                    <p>We received a request to activate your account. Click the following <a href="${activationLink}">link</a> to proceed.</p>
-                    <p>If you did not request this activation, please ignore this email or contact our support team.</p>
+                    <p>We received a request to ${action.toLowerCase().replace('send', '')}. Click the following <a href="${link}">link</a> to proceed.</p>
+                    <p>If you did not request this, please ignore this email or contact our support team.</p>
                 </div>
             </body>
             </html>
         `;
-        await this.sendMail(toEmail, subject, htmlContent);
     }
-    
-    async sendPasswordResetMail(toEmail, resetPasswordPageLink) {
-        const subject = 'Password Reset - CHRONOS';
-        const htmlContent = `
-            <html>
-            <head>
-                <style>${styles}</style>
-                <title>${subject}</title>
-            </head>
-            <body>
-                <div class="email-container">
-                    <h1>${subject}</h1>
-                    <p>Dear CHRONOS user,<br>
-                    <p>We received a request to reset your password. Click the following <a href="${resetPasswordPageLink}">link</a> to proceed.<br>
-                    <p>If you did not request a password reset, please ignore this email or contact our support team.</p>
-                </div>
-            </body>
-            </html>
-        `;
-        await this.sendMail(toEmail, subject, htmlContent);
+
+    async log(logObject) {
+        const logMessage = JSON.stringify({ ...logObject, time: new Date().toISOString() }) + "\n";
+        const logFileName = `emailService-${new Date().toISOString().split('T')[0]}.log`;
+        const logsDirPath = path.join(__dirname, '..', 'logs', 'e-mails');
+        const logFilePath = path.join(logsDirPath, logFileName);
+
+        try {
+            await fs.mkdir(logsDirPath, { recursive: true });
+            await fs.appendFile(logFilePath, logMessage, 'utf8');
+        } catch (err) {
+            console.error(`Failed to write log: ${err.message}`);
+        }
     }
 }
 

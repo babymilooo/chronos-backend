@@ -18,8 +18,8 @@ app.use(cors({
 
 app.use(cookieParser());
 app.use(express.json());
-app.use('/api', authRouter);
-app.use('/api', userRouter);
+app.use('/api/auth/', authRouter);
+app.use('/api/user/', userRouter);
 app.use(errorMiddleware);
 
 let server;
@@ -27,19 +27,22 @@ let server;
 const start = async () => {
     try {
         await mongoose.connect(process.env.DB_URL);
-        app.listen(PORT, () => console.log(`Server is running on port http://127.0.0.1:${PORT}`));
+        server = app.listen(PORT, () => console.log(`Server is running on port http://127.0.0.1:${PORT}`));
     } catch (e) {
         console.error('Unable to connect to the database:', e);
     }
-}
+};
 
-const stop = () => {
+const stop = async () => {
     if (server) {
-        server.close();
+        server.close(() => {
+            console.log('Server stopped');
+            mongoose.disconnect();
+        });
     } else {
         console.error('Server was not started or already stopped.');
     }
-}
+};
 
 if (require.main === module) {
     start();

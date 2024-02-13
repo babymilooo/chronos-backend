@@ -1,4 +1,4 @@
-require('dotenv').config({ path: './config/.env' });
+require('dotenv').config({ path: '.env' });
 const APIService = require('./services/API-service');
 
 function countHolidaysByTypes(holidays) {
@@ -20,7 +20,7 @@ async function main() {
     var lon = '-0.118092';
 
     let country = await APIService.getCountry(lat, lon);
-    let holidays = await APIService.getHolidays("UA", "2024");
+    let holidays = await APIService.getHolidays("Ukrain", "2024");
 
     // sort by date (Jan -> Dec)
     holidays.sort((a, b) => {
