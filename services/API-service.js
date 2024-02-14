@@ -40,8 +40,8 @@ class APIService {
             const response = await requestGet({
                 url: 'https://api.namefake.com/'
             });
-            console.log(response.body);
-            return JSON.parse(response.body);
+            const username = JSON.parse(response.body).username;
+            return username;
         } catch (error) {
             console.error(error);
             throw error;

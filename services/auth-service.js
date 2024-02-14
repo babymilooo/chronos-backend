@@ -4,27 +4,48 @@ const tokenService = require("./token-service");
 const UserDto = require("../dtos/user-dto");
 const ApiError = require("../exeptions/api-error");
 const EmailsService = require("./e-mail-service");
+const { use } = require("../router/user-router");
 
 class AuthService {
 
-    async registration(email, password) {
+    async registration(email, password, username) {
+        if (!email) {
+            throw ApiError.BadRequest(`Email is not defined`);
+        }
+
+        if (!password) {
+            throw ApiError.BadRequest(`Password is not defined`);
+        }
+
+        if (!username) {
+            throw ApiError.BadRequest(`Username is not defined`);
+        }
+
         const candidate = await userModel.findOne({ email: email });
 
         if (candidate) {
             throw ApiError.BadRequest(`User exists`);
         }
 
-        const hashedPassword = await bcrypt.hash(password, 6);
-        const user = await userModel.create({ password: hashedPassword, email });
+        const hashedPassword = await bcrypt.hash(password, parseInt(process.env.SALT_ROUNDS));
+        const user = await userModel.create({ password: hashedPassword, email: email, username: username });
         const userDto = new UserDto(user);
         const tokens = tokenService.generateTokens({ ...userDto });
         await tokenService.saveToken(userDto.id, tokens.refreshToken);
-        await EmailsService.sendActivationMail(userDto.email, `${process.env.API_URL}/api/activate/${tokens.activationToken}`);
+        await EmailsService.sendActivationMail(email, `${process.env.API_URL}/api/activate/${tokens.activationToken}`);
 
         return { ...tokens, user: userDto }
     }
 
     async login(email, password) {
+        if (!email) {
+            throw ApiError.BadRequest(`Email is not defined`);
+        }
+
+        if (!password) {
+            throw ApiError.BadRequest(`Password is not defined`);
+        }
+
         const user = await userModel.findOne({ email: email });
 
         if (!user) {

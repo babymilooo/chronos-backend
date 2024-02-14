@@ -1,6 +1,7 @@
 const { validationResult } = require("express-validator");
 const AuthService = require("../services/auth-service");
 const ApiError = require("../exeptions/api-error");
+const APIService = require("../services/api-service");
 
 class authController {
     async registration(req, res, next) {
@@ -10,8 +11,9 @@ class authController {
                 return next(ApiError.BadRequest('Validation error', errors.array()));
             }
             const { email, password } = req.body;
-            const userData = await AuthService.registration(email, password);
-            res.cookie('refreshToken', userData.refreshToken, { maxAge: 30 * 24 * 60 * 1000, httpOnly: true });
+            const username = await APIService.getRandomUsername();
+            const userData = await AuthService.registration(email, password, username);
+            res.cookie('refreshToken', userData.refreshToken, { maxAge: parseInt(process.env.REFRESH_TOKEN_LIFETIME), httpOnly: true });
             return res.json(userData);
         } catch (error) {
             next(error);
@@ -22,7 +24,7 @@ class authController {
         try {
             const { email, password } = req.body;
             const userData = await AuthService.login(email, password);
-            res.cookie('refreshToken', userData.refreshToken, { maxAge: 30 * 24 * 60 * 1000, httpOnly: true });
+            res.cookie('refreshToken', userData.refreshToken, { maxAge: parseInt(process.env.REFRESH_TOKEN_LIFETIME), httpOnly: true });
             return res.json(userData);
         } catch (e) {
             next(e);
@@ -44,7 +46,7 @@ class authController {
         try {
             const { refreshToken } = req.cookies;
             const userData = await AuthService.regenerateToken(refreshToken);
-            res.cookie('refreshToken', userData.refreshToken, { maxAge: 30 * 24 * 60 * 1000, httpOnly: true });
+            res.cookie('refreshToken', userData.refreshToken, { maxAge: parseInt(process.env.REFRESH_TOKEN_LIFETIME), httpOnly: true });
             return res.json(userData);
         } catch (e) {
             next(e);
