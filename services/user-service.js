@@ -18,41 +18,20 @@ class userService {
         if (!id) {
             throw ApiError.BadRequest('Id is not defined');
         }
-        
+
         const user = await userModel.findById(id);
         return new UserDto(user);
     }
 
-    async getUserByUsername(username) {
-        if (!username) {
-            throw ApiError.BadRequest('Username is not defined');
-        }
-        
-        const user = await userModel.findOne({ username });
-        return new UserDto(user);
-    }
-
     async updateUserById(id, data) {
-        const { username, email, bio } = data;
+        const updatedUser = await userModel.findByIdAndUpdate(id, data, { new: true, runValidators: true });
 
-        if (!id) {
-            throw ApiError.BadRequest('Id is not defined');
-        }
+        if (!updatedUser) {
+            throw ApiError.BadRequest(`User not found`);
+        };
 
-        if (!username) {
-            throw ApiError.BadRequest('Username is not defined');
-        }
-
-        if (!email) {
-            throw ApiError.BadRequest('Email is not defined');
-        }
-
-        if (!bio) {
-            throw ApiError.BadRequest('Bio is not defined');
-        }
-
-        const updatedUser = await userModel.findByIdAndUpdate(id, { username, email, bio }, { new: true });
-        return new UserDto(updatedUser);
+        const userDto = new UserDto(updatedUser);
+        return { updatedUser: userDto };
     }
 
     async deleteUserById(id) {
@@ -60,48 +39,12 @@ class userService {
             throw ApiError.BadRequest('Id is not defined');
         }
 
+        const login = user.login;
+
         const user = await userModel.findByIdAndDelete(id);
-        return new UserDto(user);
+
+        return login;
     }
-
-    // async updateProfileBio(id, bio) {
-    //     if (!id) {
-    //         throw ApiError.BadRequest('Id is not defined');
-    //     }
-
-    //     if (!bio) {
-    //         throw ApiError.BadRequest('Bio is not defined');
-    //     }
-
-    //     const user = await userModel.findByIdAndUpdate(id, { bio }, { new: true });
-    //     return new UserDto(user);
-    // }
-
-    // async updateProfileEmail(id, email) {
-    //     if (!id) {
-    //         throw ApiError.BadRequest('Id is not defined');
-    //     }
-
-    //     if (!email) {
-    //         throw ApiError.BadRequest('Email is not defined');
-    //     }
-
-    //     const user = await userModel.findByIdAndUpdate(id, { email }, { new: true });
-    //     return new UserDto(user);
-    // }
-
-    // async updateProfileUsername(id, username) {
-    //     if (!id) {
-    //         throw ApiError.BadRequest('Id is not defined');
-    //     }
-
-    //     if (!username) {
-    //         throw ApiError.BadRequest('Username is not defined');
-    //     }
-
-    //     const user = await userModel.findByIdAndUpdate(id, { username }, { new: true });
-    //     return new UserDto(user);
-    // }
 
     async updateProfilePassword(id, oldPassword, newPassword) {
         if (!id) {
@@ -128,15 +71,19 @@ class userService {
         return new UserDto(updatedUser);
     }
 
-    async updateProfileImage(id, image) {
-        if (!id) {
-            throw ApiError.BadRequest('Id is not defined');
-        }
+    async updateProfileImage(userId, fileUrl) {
+        const updatedUser = await userModel.findByIdAndUpdate(
+            userId,
+            { profilePicture: fileUrl },
+            { new: true, runValidators: true }
+        );
 
-        const user = await userModel.findByIdAndUpdate(id, { image }, { new: true });
-        return new UserDto(user);
+        if (!updatedUser) {
+            throw ApiError.BadRequest(`User not found`);
+        };
+
+        return;
     }
-
 }
 
 module.exports = new userService();

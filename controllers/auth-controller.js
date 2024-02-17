@@ -13,7 +13,7 @@ class authController {
             const { email, password } = req.body;
             const username = await APIService.getRandomUsername();
             const userData = await AuthService.registration(email, password, username);
-            res.cookie('refreshToken', userData.refreshToken, { maxAge: parseInt(process.env.REFRESH_TOKEN_LIFETIME), httpOnly: true });
+            res.cookie('refreshToken', userData.refreshToken, { maxAge: 24 * 60 * 60 * 1000, httpOnly: true });
             return res.json(userData);
         } catch (error) {
             next(error);
@@ -24,7 +24,7 @@ class authController {
         try {
             const { email, password } = req.body;
             const userData = await AuthService.login(email, password);
-            res.cookie('refreshToken', userData.refreshToken, { maxAge: parseInt(process.env.REFRESH_TOKEN_LIFETIME), httpOnly: true });
+            res.cookie('refreshToken', userData.refreshToken, { maxAge: 24 * 60 * 60 * 1000, httpOnly: true });
             return res.json(userData);
         } catch (e) {
             next(e);
@@ -46,7 +46,7 @@ class authController {
         try {
             const { refreshToken } = req.cookies;
             const userData = await AuthService.regenerateToken(refreshToken);
-            res.cookie('refreshToken', userData.refreshToken, { maxAge: parseInt(process.env.REFRESH_TOKEN_LIFETIME), httpOnly: true });
+            res.cookie('refreshToken', userData.refreshToken, { maxAge: 24 * 60 * 60 * 1000, httpOnly: true });
             return res.json(userData);
         } catch (e) {
             next(e);
