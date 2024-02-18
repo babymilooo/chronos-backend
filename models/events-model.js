@@ -9,24 +9,23 @@ const EventModel = new Schema({
     endTime: { type: Date, required: true },
     notification: {
         email: { type: Boolean, default: false },
-        sms: { type: Boolean, default: false }
+        sms: { type: Boolean, default: false },
+    },
+    notificationTimeBefore: { 
+        days: { type: Number, default: 0 },
+        hours: { type: Number, default: 0 },
+        minutes: { type: Number, default: 15 },
     },
     repeat: {
         type: String,
         enum: ['daily', 'weekly', 'monthly', 'custom'],
         default: 'daily',
-        customDays: { type: [Number], default: [] } // For custom repeat, array of days (0-6, Sunday-Saturday)
+        customDays: { type: [Number], default: [] }, // For custom repeat, array of days (0-6, Sunday-Saturday)
     },
-    status: {
-        type: String,
-        enum: ['done', 'not done'],
-        default: 'not done'
-    },
-    priority: {
-        type: String,
-        enum: ['not critical', 'low', 'medium', 'high'],
-        default: 'not critical'
-    }
+    status: { type: String, enum: ['done', 'not done'], default: 'not done' },
+    priority: { type: String, enum: ['not critical', 'low', 'medium', 'high'], default: 'not critical' },
+    followers: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+    coOwners: [{ type: Schema.Types.ObjectId, ref: 'User' }],
 });
 
 module.exports = model('Event', EventModel);
