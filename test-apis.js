@@ -16,8 +16,8 @@ function countHolidaysByTypes(holidays) {
 }
 
 async function main() {
-    var lat = '31.509865';
-    var lon = '-0.118092';
+    const lat = '31.509865';
+    const lon = '-0.118092';
 
     let country = await APIService.getCountry(lat, lon);
     let holidays = await APIService.getHolidays("Ukrain", "2024");
