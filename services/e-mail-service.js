@@ -22,6 +22,13 @@ const styles = `
         color: #666;
         line-height: 1.6;
     }
+    .password-container {
+        font-weight: bold;
+        background-color: #f4f4f4;
+        padding: 10px;
+        border-radius: 5px;
+        word-break: break-all;
+    }
     a {
         color: #3498db;
         text-decoration: none;
@@ -43,10 +50,11 @@ class MailService {
         });
     }
 
-    async sendEmail({ toEmail, subject, contentAction, link }) {
-        const htmlContent = this.generateEmailHtml(subject, contentAction, link);
+    async sendEmail({ toEmail, subject, action, password, link }) {
+        const htmlContent = this.generateEmailHtml(subject, action, password, link);
         try {
-            const info = await this.transporter.sendMail({
+            // const info = await this.transporter.sendMail({
+            await this.transporter.sendMail({
                 from: `"CHRONOS" <${process.env.SMTP_USER}>`,
                 to: toEmail,
                 subject: subject,
@@ -54,32 +62,43 @@ class MailService {
                 headers: { 'Content-Type': 'text/html; charset=utf-8' },
             });
 
-            this.log({ type: 'Success', action: contentAction, subject, to: toEmail, response: info.response });
+            // this.log({ type: 'Success', action: action, subject, to: toEmail, response: info.response });
         } catch (error) {
-            this.log({ type: 'Error', action: contentAction, subject, to: toEmail, error: error.message });
+            // this.log({ type: 'Error', action: action, subject, to: toEmail, error: error.message });
             throw error;
         }
     }
 
-    async sendActivationMail(toEmail, activationLink) {
+    async sendActivationMail(toEmail, password) {
         await this.sendEmail({
             toEmail,
             subject: 'CHRONOS Account Activation',
-            contentAction: 'SendActivationMail',
-            link: activationLink,
+            contentAction: 'Activate your account with the temporary password',
+            password: password,
+            link: null,
         });
     }
 
-    async sendPasswordResetMail(toEmail, resetPasswordPageLink) {
+    async sendPasswordResetMail(toEmail, link) {
         await this.sendEmail({
             toEmail,
             subject: 'Password Reset - CHRONOS',
-            contentAction: 'SendPasswordResetMail',
-            link: resetPasswordPageLink,
+            contentAction: 'reset your password',
+            password: null,
+            link: link,
         });
     }
 
-    generateEmailHtml(subject, action, link) {
+    generateEmailHtml(subject, action, password, link) {
+        let actionContent;
+
+        if (password) {
+            actionContent = `<p>Your temporary password is: <span class="password-container">${password}</span></p>
+                             <p>Please use this password to log in and immediately change it for security purposes.</p>`;
+        } else if (link) {
+            actionContent = `<p>Click the following <a href="${link}">link</a> to proceed.</p>`;
+        }
+
         return `
             <html>
             <head>
@@ -90,7 +109,8 @@ class MailService {
                 <div class="email-container">
                     <h1>${subject}</h1>
                     <p>Dear CHRONOS user,</p>
-                    <p>We received a request to ${action.toLowerCase().replace('send', '')}. Click the following <a href="${link}">link</a> to proceed.</p>
+                    <p>We received a request to ${action}.</p>
+                    ${actionContent}
                     <p>If you did not request this, please ignore this email or contact our support team.</p>
                 </div>
             </body>

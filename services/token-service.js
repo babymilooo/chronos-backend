@@ -5,13 +5,19 @@ class TokenService {
     generateTokens(payload) {
         const accessToken = jwt.sign(payload, process.env.JWT_ACCESS_SECRET, { expiresIn: '30m' });
         const refreshToken = jwt.sign(payload, process.env.JWT_REFRESH_SECRET, { expiresIn: '30d' });
-        const activationToken = jwt.sign(payload, process.env.JWT_ACTIVATION_SECRET, { expiresIn: '30m' });
+        // changed to temporaty password
+        // const activationToken = jwt.sign(payload, process.env.JWT_ACTIVATION_SECRET, { expiresIn: '30m' });
 
         return {
             accessToken,
             refreshToken,
-            activationToken
+            // activationToken
         }
+    }
+
+    generateResetPasswordToken(email) {
+        const resetPasswordToken = jwt.sign({ email: email }, process.env.JWT_RESET_PASSWORD_SECRET, { expiresIn: '10m' });
+        return resetPasswordToken;
     }
 
     async saveToken(userId, refreshToken) {
@@ -54,6 +60,15 @@ class TokenService {
     validateRefreshToken(token) {
         try {
             const userData = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
+            return userData;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    validateResetPasswordToken(token) {
+        try {
+            const userData = jwt.verify(token, process.env.JWT_RESET_PASSWORD_SECRET);
             return userData;
         } catch (e) {
             return null;

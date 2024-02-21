@@ -1,6 +1,6 @@
 const userService = require("../services/user-service");
 
-class userController {
+class UserController {
     async getUsers(req, res, next) {
         try {
             const users = await userService.getAllUsers();
@@ -69,4 +69,4 @@ class userController {
     }
 }
 
-module.exports = new userController();
+module.exports = new UserController();

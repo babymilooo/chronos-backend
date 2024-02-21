@@ -55,14 +55,44 @@ class authController {
 
     async activate(req, res, next) {
         try {
-            const activationLink = req.params.link;
-            await AuthService.activate(activationLink);
-            return res.redirect(process.env.CLIENT_URL);
+            const { email, activationPassword } = req.body;
+            await AuthService.activate(email, activationPassword);
+            return res.redirect(process.env.CLIENT_URL); // TODO: ensure that redirection works
         } catch (e) {
             next(e);
         }
     }
 
+    async renewActivationCode(req, res, next) {
+        try {
+            const { email } = req.body;
+            await AuthService.renewActivationCode(email);
+            return res.json({ message: 'A new activation code has been sent to your email' });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async requestPasswordResetLink(req, res, next) {
+        try {
+            const { email } = req.body;
+            await AuthService.requestPasswordResetLink(email);
+            return res.json({ message: 'Password reset link has been sent to your email' });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async changePassword(req, res, next) {
+        try {
+            const { password } = req.body;
+            const token = req.params.link;
+            await AuthService.changePassword(password, token);
+            return res.json({ message: 'Password has been changed' });
+        } catch (error) {
+            next(error);
+        }
+    }
 }
 
 module.exports = new authController();

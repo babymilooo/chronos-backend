@@ -1,5 +1,8 @@
+const authController = require('../controllers/auth-controller');
 const userController = require('../controllers/auth-controller');
 const authMiddleware = require('../middlewares/auth-middleware');
+const accountIsActivatedMiddleware = require('../middlewares/account-is-activated-middleware');
+const accountIsNotActivatedMiddleware = require('../middlewares/account-is-not-activated-middleware');
 
 const Router = require('express').Router;
 
@@ -13,9 +16,13 @@ router.post('/registration',
     userController.registration
 );
 
-router.post('/login', userController.login);
+router.post('/login', accountIsActivatedMiddleware, userController.login);
 router.post('/logout', authMiddleware, userController.logout);
-router.get('/activate/:link', userController.activate);
+router.post('/get-password-reset-link', authController.requestPasswordResetLink);
+router.post('/password-reset/:link', authController.changePassword);
+// router.get('/activate/:link', userController.activate);
+router.post('/activate', userController.activate);
+router.post('/renew-activation-code', accountIsNotActivatedMiddleware, userController.renewActivationCode);
 router.get('/refresh', userController.refresh);
 
 module.exports = router;

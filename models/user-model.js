@@ -7,14 +7,10 @@ const UserModel = new Schema({
     bio: { type: String, default: '' },
     image: { type: String, default: '' },
     password: { type: String, required: true },
+    activationPassword: { type: String },
+    pendingPasswordUpdate: { type: Boolean, default: false }, // TODO: I want to create a job to set it to false after 10 minutes
     isActivated: { type: Boolean, default: false },
-    activationLink: { type: String },
-});
-
-UserModel.pre('save', async function(next) {
-    if (!this.isModified('password')) return next();
-    this.password = await bcrypt.hash(this.password, 10);
-    next();
+    // activationLink: { type: String },
 });
 
 module.exports = model('User', UserModel);

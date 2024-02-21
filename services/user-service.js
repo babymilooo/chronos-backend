@@ -1,13 +1,14 @@
 const userModel = require('../models/user-model');
 const UserDto = require('../dtos/user-dto');
 const ApiError = require('../exeptions/api-error');
+const PasswordService = require('./password-services');
 
 /*
     { new: true } - return the modified document (after the update)
     { new: false } - return the original document (before the update)
 */
 
-class userService {
+class UserService {
     async getAllUsers() {
         const users = await userModel.find();
         const usersDto = users.map(user => new UserDto(user));
@@ -40,9 +41,7 @@ class userService {
         }
 
         const login = user.login;
-
-        const user = await userModel.findByIdAndDelete(id);
-
+        await userModel.findByIdAndDelete(id);
         return login;
     }
 
@@ -60,13 +59,13 @@ class userService {
         }
 
         const user = await userModel.findById(id);
-        const isPassEquals = await bcrypt.compare(oldPassword, user.password);
+        const isPassEquals = await PasswordService.comparePasswords(oldPassword, user.password);
 
         if (!isPassEquals) {
-            throw ApiError.BadRequest('Incorrect password');
+            throw ApiError.BadRequest('New password is the same as the old one');
         }
 
-        const hashPassword = await bcrypt.hash(newPassword, parseInt(process.env.SALT_ROUNDS));
+        const hashPassword = await PasswordService.hashPassword(newPassword);
         const updatedUser = await userModel.findByIdAndUpdate(id, { password: hashPassword }, { new: true });
         return new UserDto(updatedUser);
     }
@@ -82,8 +81,9 @@ class userService {
             throw ApiError.BadRequest(`User not found`);
         };
 
-        return;
+        const userDto = new UserDto(updatedUser);
+        return { updatedUser: userDto };
     }
 }
 
-module.exports = new userService();
+module.exports = new UserService();
