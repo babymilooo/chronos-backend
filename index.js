@@ -5,6 +5,7 @@ const cookieParser = require('cookie-parser');
 const mongoose = require('mongoose');
 const authRouter = require('./router/auth-router');
 const userRouter = require('./router/user-router');
+const eventRouter = require('./router/events-router');
 const errorMiddleware = require('./middlewares/error-middleware');
 
 const PORT = process.env.PORT || 5000;
@@ -20,6 +21,7 @@ app.use(cookieParser());
 app.use(express.json());
 app.use('/api/auth/', authRouter);
 app.use('/api', userRouter);
+app.use('/api', eventRouter);
 app.use(errorMiddleware);
 
 let server;

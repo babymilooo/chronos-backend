@@ -1,6 +1,8 @@
 const { Schema, model } = require('mongoose');
-
+//"calendarId": ObjectId("идентификатор_календаря"),
 const EventModel = new Schema({
+    calendarId: { type: Schema.Types.ObjectId, ref: 'Calendar', required: true },
+    uniqueId: { type: String, required: true },
     user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     eventType: { type: String, enum: ['arrangement', 'reminder', 'task'], required: true },
     title: { type: String, required: true },
