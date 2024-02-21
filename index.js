@@ -6,6 +6,7 @@ const mongoose = require('mongoose');
 const startAgenda = require('./config/agenda-config');
 const authRouter = require('./router/auth-router');
 const userRouter = require('./router/user-router');
+const eventRouter = require('./router/events-router');
 const errorMiddleware = require('./middlewares/error-middleware');
 const eventRouter = require('./router/events-router');
 
