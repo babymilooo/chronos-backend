@@ -3,7 +3,7 @@ const AuthService = require("../services/auth-service");
 const ApiError = require("../exeptions/api-error");
 const APIService = require("../services/api-service");
 
-class authController {
+class AuthController {
     async registration(req, res, next) {
         try {
             const errors = validationResult(req);
@@ -95,4 +95,4 @@ class authController {
     }
 }
 
-module.exports = new authController();
+module.exports = new AuthController();

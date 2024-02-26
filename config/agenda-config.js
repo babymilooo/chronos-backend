@@ -1,16 +1,33 @@
 const Agenda = require('agenda');
 const mongoose = require('mongoose');
 
-const agenda = new Agenda({ mongo: mongoose.connection.getClient().db() });
+const agenda = new Agenda({
+    db: { address: process.env.DB_URL, collection: 'jobs' }
+});
 
-// Define jobs
-agenda.define('example job', async job => {
-  // Job details here
+agenda.define('set-pending-password-update-to-false', async job => {
+    const { email } = job.attrs.data;
+    const UserModel = mongoose.model('User');
+    await UserModel.findOneAndUpdate({ email }, { pendingPasswordUpdate: false });
+    await job.remove();
 });
 
 const startAgenda = async () => {
-  await agenda.start();
-  // Schedule jobs here
+    await agenda.start();
+    console.log("Agenda started");
 };
 
-module.exports = { startAgenda, agenda };
+const stopAgenda = async () => {
+    await agenda.stop();
+    console.log("Agenda stopped");
+};
+
+const createSetPendingPasswordUpdateJob = async (email) => {
+    await agenda.schedule(`in ${process.env.RESET_TOKEN_EXPIRATION_TIME} minutes`, 'set-pending-password-update-to-false', { email });
+};
+
+module.exports = {
+    startAgenda,
+    stopAgenda,
+    createSetPendingPasswordUpdateJob
+};

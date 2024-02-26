@@ -3,10 +3,9 @@ const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const mongoose = require('mongoose');
-const startAgenda = require('./config/agenda-config');
+const { startAgenda, stopAgenda } = require('./config/agenda-config');
 const authRouter = require('./router/auth-router');
 const userRouter = require('./router/user-router');
-const eventRouter = require('./router/events-router');
 const errorMiddleware = require('./middlewares/error-middleware');
 const eventRouter = require('./router/events-router');
 
@@ -33,18 +32,20 @@ const start = async () => {
         await mongoose.connect(process.env.DB_URL);
         console.log("Database connected");
         await startAgenda();
-        console.log("Agenda job scheduling started");
         server = app.listen(PORT, () => console.log(`Server is running on port http://127.0.0.1:${PORT}`));  
-      } catch (error) {
+    } catch (error) {
         console.error("Failed to connect to the database or start the server", error);
-      }
-    };
+    }
+};
 
 const stop = async () => {
     if (server) {
-        server.close(() => {
+        await stopAgenda();
+        server.close(async () => {
             console.log('Server stopped');
-            mongoose.disconnect();
+            await mongoose.disconnect().then(() => {
+                console.log('MongoDB disconnected');
+            });
         });
     } else {
         console.error('Server was not started or already stopped.');

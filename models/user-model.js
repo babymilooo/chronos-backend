@@ -8,7 +8,7 @@ const UserModel = new Schema({
     image: { type: String, default: '' },
     password: { type: String, required: true },
     activationPassword: { type: String },
-    pendingPasswordUpdate: { type: Boolean, default: false }, // TODO: I want to create a job to set it to false after 10 minutes
+    pendingPasswordUpdate: { type: Boolean, default: false },
     isActivated: { type: Boolean, default: false },
     // activationLink: { type: String },
 });

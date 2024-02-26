@@ -3,9 +3,8 @@ const TokenService = require("./token-service");
 const UserDto = require("../dtos/user-dto");
 const ApiError = require("../exeptions/api-error");
 const EmailsService = require("./e-mail-service");
-const { use } = require("../router/user-router");
 const PasswordService = require("./password-services");
-const PasswordServices = require("./password-services");
+const { createSetPendingPasswordUpdateJob } = require('../config/agenda-config');
 
 class AuthService {
 
@@ -51,10 +50,21 @@ class AuthService {
                 throw ApiError.BadRequest('Email is not defined');
             }
 
+            const user = await UserModel.findOne({ email });
+
+            if (!user) {
+                throw ApiError.BadRequest('User not found');
+            }
+
+            if (user.pendingPasswordUpdate) {
+                throw ApiError.BadRequest(`Please, use old link or request a new link no often each ${process.env.RESET_TOKEN_EXPIRATION_TIME} minutes`);
+            }
+            
             const resetToken = TokenService.generateResetPasswordToken(email);
-            // TODO: pending update set to true and create a job to set it to false after 10 minutes
             await UserModel.findOneAndUpdate({ email }, { pendingPasswordUpdate: true });
             await EmailsService.sendPasswordResetMail(email, `${process.env.API_URL}/api/auth/password-reset/${resetToken}`);
+            createSetPendingPasswordUpdateJob(email);
+            return { message: 'A password reset link has been sent to your email' };
         } catch (error) {
             throw error;
         }
@@ -75,23 +85,18 @@ class AuthService {
             }
 
             const email = TokenService.validateResetPasswordToken(token).email;
-            const oldPasswordHash = TokenService.validateResetPasswordToken(token).password;
             const user = await UserModel.findOne({ email });
 
             if (!user) {
                 throw ApiError.BadRequest('User not found');
             }
 
-            // here comparePasswords used to compare token with hashed token from db
-            if (await PasswordService.comparePasswords(token, user.hashedResetPasswordToken)) {
-                throw ApiError.BadRequest('This link is incorrect or has already been used. Please request a new link.');
-            }
-
-            if (await PasswordService.comparePasswords(newPassword, oldPasswordHash)) {
-                throw ApiError.BadRequest('New password is the same as the old one');
+            if (user.pendingPasswordUpdate) {
+                throw ApiError.BadRequest('Link has been used. Please request a new link.');
             }
 
             const hashedPassword = await PasswordService.hashPassword(newPassword);
+            await UserModel.findOneAndUpdate({ email }, { pendingPasswordUpdate: true });
             await UserModel.update({ password: hashedPassword }, { where: { id: user.id } });
         } catch (error) {
             throw error;
@@ -155,12 +160,12 @@ class AuthService {
 
     async activate(email, activationPassword) {
         const user = await UserModel.findOne({ email });
-        
+
         if (!user) {
             throw ApiError.BadRequest(`User ${email} not found`);
         }
 
-        if (await PasswordServices.comparePasswords(activationPassword, user.activationPassword)) {
+        if (!(await PasswordService.comparePasswords(activationPassword, user.activationPassword))) {
             throw ApiError.BadRequest(`Incorrect activation password`);
         }
 

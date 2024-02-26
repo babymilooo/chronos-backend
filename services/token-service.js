@@ -16,8 +16,7 @@ class TokenService {
     }
 
     generateResetPasswordToken(email) {
-        const resetPasswordToken = jwt.sign({ email: email }, process.env.JWT_RESET_PASSWORD_SECRET, { expiresIn: '10m' });
-        return resetPasswordToken;
+        return jwt.sign({ email: email }, process.env.JWT_RESET_PASSWORD_SECRET, { expiresIn: `${process.env.RESET_TOKEN_EXPIRATION_TIME}m` });
     }
 
     async saveToken(userId, refreshToken) {
