@@ -19,11 +19,11 @@ class APIService {
             throw error;
         }
     }
-    
-    async getHolidays(country, year) {
+
+    async getHolidays(country, year, type='major_holiday') {
         try {
             const response = await requestGet({
-                url: 'https://api.api-ninjas.com/v1/holidays?country=' + country + '&year=' + year,
+                url: 'https://api.api-ninjas.com/v1/holidays?country=' + country + '&year=' + year + '&type=' + type,
                 headers: {
                     'X-Api-Key': process.env.API_KEY
                 },

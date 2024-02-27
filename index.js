@@ -8,7 +8,7 @@ const authRouter = require('./router/auth-router');
 const userRouter = require('./router/user-router');
 const errorMiddleware = require('./middlewares/error-middleware');
 const eventRouter = require('./router/events-router');
-
+const holidaysRouter = require('./router/holidays-router');
 const PORT = process.env.PORT || 5000;
 
 const app = express();
@@ -23,6 +23,7 @@ app.use(express.json());
 app.use('/api/auth/', authRouter);
 app.use('/api', userRouter);
 app.use('/api', eventRouter);
+app.use('/api', holidaysRouter);
 app.use(errorMiddleware);
 
 let server;
