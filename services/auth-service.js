@@ -2,9 +2,16 @@ const UserModel = require("../models/user-model");
 const TokenService = require("./token-service");
 const UserDto = require("../dtos/user-dto");
 const ApiError = require("../exeptions/api-error");
-const EmailsService = require("./e-mail-service");
+const EmailsService = require("./e-mail-notifications/e-mail-service");
 const PasswordService = require("./password-services");
-const { createSetPendingPasswordUpdateJob } = require('../config/agenda-config');
+
+const {
+    jobResetActivationPasswordToNull,
+    jobCancelPasswordPendingUpdateReset,
+    jobResetPendingPasswordUpdateToFalse,
+    jobCancelActivationPasswordReset,
+    jobCancelAccoutDeletion
+} = require('../config/agenda-config');
 
 class AuthService {
 
@@ -40,6 +47,7 @@ class AuthService {
         const tokens = TokenService.generateTokens({ ...userDto });
         await TokenService.saveToken(userDto.id, tokens.refreshToken);
         await EmailsService.sendActivationMail(email, generatedPassword); //`${process.env.API_URL}/api/activate/${tokens.activationToken}`);
+        jobResetActivationPasswordToNull(email);
 
         return { ...tokens, user: userDto }
     }
@@ -63,7 +71,7 @@ class AuthService {
             const resetToken = TokenService.generateResetPasswordToken(email);
             await UserModel.findOneAndUpdate({ email }, { pendingPasswordUpdate: true });
             await EmailsService.sendPasswordResetMail(email, `${process.env.API_URL}/api/auth/password-reset/${resetToken}`);
-            createSetPendingPasswordUpdateJob(email);
+            jobResetPendingPasswordUpdateToFalse(email);
             return { message: 'A password reset link has been sent to your email' };
         } catch (error) {
             throw error;
@@ -98,6 +106,7 @@ class AuthService {
             const hashedPassword = await PasswordService.hashPassword(newPassword);
             await UserModel.findOneAndUpdate({ email }, { pendingPasswordUpdate: true });
             await UserModel.update({ password: hashedPassword }, { where: { id: user.id } });
+            jobCancelPasswordPendingUpdateReset(email);
         } catch (error) {
             throw error;
         }
@@ -127,7 +136,9 @@ class AuthService {
         const userDto = new UserDto(user);
         const tokens = TokenService.generateTokens({ ...userDto });
 
+        jobCancelAccoutDeletion(email);
         await TokenService.saveToken(userDto.id, tokens.refreshToken);
+        await this.updateLastActive(userDto.id);
 
         return { ...tokens, user: userDto }
     }
@@ -165,11 +176,18 @@ class AuthService {
             throw ApiError.BadRequest(`User ${email} not found`);
         }
 
+        if (user.isActivated) {
+            throw ApiError.BadRequest(`User ${email} is already activated`);
+        }
+
         if (!(await PasswordService.comparePasswords(activationPassword, user.activationPassword))) {
             throw ApiError.BadRequest(`Incorrect activation password`);
         }
 
+        user.activationPassword = null;
         user.isActivated = true;
+        jobCancelActivationPasswordReset(email);
+
         await user.save();
     }
 
@@ -183,11 +201,18 @@ class AuthService {
         const generatedPassword = PasswordService.generateTemporaryPassword(8);
         const hashedGeneratedPassword = await PasswordService.hashPassword(generatedPassword);
         user.activationPassword = hashedGeneratedPassword;
+
         await user.save();
         await EmailsService.sendActivationMail(email, generatedPassword);
+        jobResetActivationPasswordToNull(email);
 
         return { message: 'A new activation code has been sent to your email' };
     }
+
+    async updateLastActive(userId) {
+        await UserModel.findByIdAndUpdate(userId, { lastActive: new Date() });
+    }
+
 }
 
 module.exports = new AuthService();
