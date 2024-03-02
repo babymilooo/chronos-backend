@@ -144,7 +144,7 @@ class AuthService {
     }
 
     async logout(refreshToken) {
-        const token = await TokenService.removeToken(refreshToken);
+        const token = await TokenService.removeRefreshToken(refreshToken);
         return token;
     }
 
@@ -164,6 +164,7 @@ class AuthService {
         const userDto = new UserDto(user);
         const tokens = TokenService.generateTokens({ ...userDto });
 
+        await TokenService.removeRefreshTokenByUserID(userDto.id);
         await TokenService.saveToken(userDto.id, tokens.refreshToken);
 
         return { ...tokens, user: userDto }

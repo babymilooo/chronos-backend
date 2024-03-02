@@ -20,11 +20,13 @@ class TokenService {
     }
 
     async saveToken(userId, refreshToken) {
-        const tokenData = await tokenModel.findOne({ where: { user: userId } });
+        const tokenData = await tokenModel.findOne({ user: userId });
+
         if (tokenData) {
             tokenData.token = refreshToken;
             return tokenData.save();
         }
+
         try {
             const token = await tokenModel.create({
                 user: userId,
@@ -37,8 +39,13 @@ class TokenService {
         }
     }
 
-    async removeToken(refreshToken) {
+    async removeRefreshToken(refreshToken) {
         const tokenData = await tokenModel.deleteOne({ refreshToken });
+        return tokenData;
+    }
+
+    async removeRefreshTokenByUserID(userID) {
+        const tokenData = await TokenService.deleteOne({ user: userID });
         return tokenData;
     }
 

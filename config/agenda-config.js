@@ -48,37 +48,40 @@ agenda.define('check-inactive-users-notify-and-delete', async job => {
     const UserModel = mongoose.model('User');
     const now = new Date();
 
-    const timeLimite = 5;                           // minutes
-    const notifyBefore = 5;                         // minutes
-    const millisecondsMin = 1000 * 60;              // minute
-    const millisecondsDay = 1000 * 60 * 60 * 24;    // day
+    const notificateDays = [30, 14, 7, 3, 2, 1, 0];
+    const underWarning = process.env.INACTIVE_USER_DELETION_DAYS;
+    const millisecondsDay = 1000 * 60 * 60 * 24;
 
     // $lt: less than
     // $gt: greater than
     const usersToNotify = await UserModel.find({
         lastActive: { 
-            $lt: new Date(now - (millisecondsMin * (timeLimite - notifyBefore))) 
+            $lt: new Date(now - (millisecondsDay * (underWarning - notificateDays[0]))) 
         }
     });
 
     for (const user of usersToNotify) {
-        const minutesUntilDeletion = timeLimite - Math.floor((now - user.lastActive) / millisecondsMin);
-        // const daysUntilDeletion = Math.round((user.lastActive - now) / millisecondsDay);
-        const finalTime = new Date(user.lastActive.getTime() + (millisecondsMin * timeLimite));
+        const daysUntilDeletion = underWarning - Math.trunc((now - user.lastActive) / millisecondsDay);
+        console.log(`User ${user.email} will be deleted in ${daysUntilDeletion} days`);
+        const finalTime = new Date(user.lastActive.getTime() + (millisecondsDay * underWarning));
         
+        if (!(daysUntilDeletion in notificateDays)) {
+            continue;
+        }
+
         // Check if the final time is valid
         if (finalTime instanceof Date && !isNaN(finalTime)) {
             // Check if job is already scheduled
             const jobs = await agenda.jobs({ name: 'delete-inactive-user', 'data.email': user.email });
 
-            if (jobs.length === 0 && minutesUntilDeletion <= 1) {
+            if (jobs.length === 0 && daysUntilDeletion <= 1) {
                 agenda.schedule(finalTime, 'delete-inactive-user', { email: user.email });
             }
         } else {
             console.log(`Agenda error: Invalid date! User: ${user}\nFinal Time: ${finalTime}`);
         }
 
-        await EmailsService.sendDeletionWarning(user.email, minutesUntilDeletion, finalTime);
+        await EmailsService.sendDeletionWarning(user.email, daysUntilDeletion, finalTime);
     }
 });
 
@@ -125,4 +128,3 @@ module.exports = {
 };
 
 // TODO: Handle time zones
-// TODO: Test users deletion
