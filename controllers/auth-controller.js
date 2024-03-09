@@ -6,11 +6,8 @@ const APIService = require("../services/api-service");
 class AuthController {
     async registration(req, res, next) {
         try {
-            const errors = validationResult(req);
-            if (!errors.isEmpty()) {
-                return next(ApiError.BadRequest('Validation error', errors.array()));
-            }
             const { email, password } = req.body;
+            console.log(email, password);
             const username = await APIService.getRandomUsername();
             const userData = await AuthService.registration(email, password, username);
             res.cookie('refreshToken', userData.refreshToken, { maxAge: 24 * 60 * 60 * 1000, httpOnly: true });

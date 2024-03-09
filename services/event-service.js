@@ -31,7 +31,13 @@ class EventService {
         const calendarIds = calendars.map(calendar => calendar._id);
 
         // Поиск всех событий, связанных с календарями пользователя за указанный год
-        const events = await eventsModel.find({ calendarId: { $in: calendarIds } });
+        const events = await eventsModel.find({
+            $or: [
+                { calendarId: { $in: calendarIds } }, // События пользователя
+                { coOwners: userId }, // События, в которых пользователь является совладельцем
+                { followers: userId } // События, в которых пользователь является приглашенным
+            ]
+        });
 
         return events;
     }
@@ -47,33 +53,69 @@ class EventService {
         return event;
     }
 
-    async createEvent({ date, startTime, endTime, title, user }) {
+    async createEvent({ date, startTime, endTime, title, user, coOwners = [], attendees = [] }) {
         // Проверка входных данных
         if (!date || !startTime || !endTime || !title || !user) {
             ApiError.BadRequest('All fields are required');
         }
 
-        const eventUniqueId = uuid.v4();
         // Найти или создать календарь для даты и пользователя
-        let calendar = await calendarModel.findOne({ userId: user, date: date });
-        if (!calendar) {
-            calendar = new calendarModel({ userId: user, date: date, type: 'default' });
-            await calendar.save();
-        }
+        const createCalendarForUser = async (userId, date) => {
+            let calendar = await calendarModel.findOne({ userId, date });
+            if (!calendar) {
+                calendar = new calendarModel({ userId, date, type: 'default' });
+                await calendar.save();
+            }
+            return calendar;
+        };
+
+        // Создание календаря для основного пользователя
+        const userCalendar = await createCalendarForUser(user, date);
 
         // Создать новое событие
+        const eventUniqueId = uuid.v4();
         const event = new Event({
             title,
             startTime: new Date(`${date}T${startTime}`),
             endTime: new Date(`${date}T${endTime}`),
             creator: user,
-            calendarId: calendar._id,
+            calendarId: userCalendar._id,
             uniqueId: eventUniqueId,
             eventType: 'arrangement',
-            user: user
+            user,
+            coOwners,
+            followers: attendees
         });
 
         await event.save();
+
+        if (coOwners.length > 0 || attendees.length > 0) {
+            const createCalendarsAndEventsForUsers = async (users, date) => {
+                const userIds = Object.values(users);
+                console.log(userIds);
+                const promises = userIds.map(async (userId) => {
+                    const calendar = await createCalendarForUser(userId, date);
+
+                    const event = new Event({
+                        title,
+                        startTime: new Date(`${date}T${startTime}`),
+                        endTime: new Date(`${date}T${endTime}`),
+                        creator: user, // Создатель события
+                        calendarId: calendar._id,
+                        uniqueId: eventUniqueId,
+                        eventType: 'arrangement',
+                        user: userId, // ID пользователя, который будет совладельцем или приглашенным
+                        coOwners: coOwners.includes(userId) ? [user, userId] : [user], // Если пользователь является совладельцем, то добавляем его и создателя события в список совладельцев
+                        followers: attendees.includes(userId) ? [user, userId] : [user] // Если пользователь является приглашенным, то добавляем его и создателя события в список приглашенных
+                    });
+                    await event.save();
+                });
+                await Promise.all(promises);
+            };
+
+            await createCalendarsAndEventsForUsers(coOwners.concat(attendees), date);
+        }
+
         return event;
     }
 

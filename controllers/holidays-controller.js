@@ -4,7 +4,7 @@ const holidaysService = require("../services/holidays-service");
 class HolidaysController {
     async getHolidays(req, res, next) {
         try {
-            const { country, year, type } = req.body;
+            const { country, year, type } = req.query;
             if (!country || !year) {
                 throw ApiError.BadRequest('Country or year is not defined');
             }

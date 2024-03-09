@@ -3,7 +3,6 @@ module.exports = class UserDto {
     bio;
     username;
     image;
-
     constructor(model) {
         this.id = model._id;
         this.bio = model.bio;
