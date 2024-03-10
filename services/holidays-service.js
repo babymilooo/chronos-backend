@@ -9,7 +9,6 @@ class HolidaysService {
         if (!isoCodeDocument) {
             // Если страна не найдена, запрос к API для получения праздников
             const holidaysFromApi = await apiService.getHolidays(country, year, type);
-            console.log('hodays from api');
             if (holidaysFromApi.length > 0) {
                 // Сохранение новой страны и ISO кода в базу данных
                 const newIsoCodeDocument = await countryIso.create({ countryName: country, code: holidaysFromApi[0].iso });
@@ -27,7 +26,6 @@ class HolidaysService {
                 });
 
                 // Отправка данных клиенту
-                console.log("sending from api");
                 return holidaysFromApi;
             }
         } else {
@@ -50,12 +48,10 @@ class HolidaysService {
                 });
 
                 // Отправка данных клиенту
-                console.log("sending from api");
                 return holidaysFromApi;
             } else {
                 // Отправка существующих данных клиенту
-                console.log('hodays from db');
-                console.log("sending from db");
+
                 const holidaysDto = holidays.holidays.map(holiday => {
                     return new HolidayDTO({
                         country: country,

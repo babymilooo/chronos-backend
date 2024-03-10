@@ -3,7 +3,8 @@ const userService = require("../services/user-service");
 class UserController {
     async getUsers(req, res, next) {
         try {
-            const users = await userService.getAllUsers();
+            const id = req.user.id;
+            const users = await userService.getAllUsers(id);
             return res.json(users);
         } catch (e) {
             next(e);

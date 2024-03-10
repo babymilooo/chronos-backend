@@ -9,8 +9,8 @@ const PasswordService = require('./password-services');
 */
 
 class UserService {
-    async getAllUsers() {
-        const users = await userModel.find();
+    async getAllUsers(id) {
+        const users = await userModel.find({ _id: { $ne: id } });
         const usersDto = users.map(user => new UserDto(user));
         return { users: usersDto };
     }

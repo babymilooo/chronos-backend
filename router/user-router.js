@@ -7,10 +7,9 @@ const adminOrOwnerMiddleware = require('../middlewares/admin-or-owner-middleware
 const userController = require('../controllers/user-controller');
 const { fileHandler, upload } = require('../services/file-service');
 
-// can do admin
-router.get('/users/:id', authMiddleware, adminMiddleware, userController.getUserById);
 
 // can do admin and any authorized user
+router.get('/users/:id', authMiddleware, userController.getUserById);
 router.get('/users', authMiddleware, userController.getUsers);
 
 // can do admin and user (account owner)
