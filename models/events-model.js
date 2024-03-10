@@ -6,7 +6,7 @@ const EventModel = new Schema({
     user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     eventType: { type: String, enum: ['arrangement', 'reminder', 'task'], required: true },
     title: { type: String, required: true },
-    description: { type: String, default: '' },
+    description: { type: String, default: null },
     startTime: { type: Date, required: true },
     endTime: { type: Date, required: true },
     notification: {
