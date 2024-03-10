@@ -1,8 +1,9 @@
 const ApiError = require("../exeptions/api-error");
-const apiService = require("./api-service");
+const apiService = require("./API-service");
 const countryIso = require("../models/iso-model");
 const holidaysModel = require("../models/holidays-model");
 const HolidayDTO = require("../dtos/holidays-dto");
+
 class HolidaysService {
     async getHolidays(country, year, type) {
         const isoCodeDocument = await countryIso.findOne({ countryName: country });
