@@ -1,5 +1,6 @@
 const request = require('request');
 const util = require('util');
+const axios = require('axios');
 
 const requestGet = util.promisify(request.get);
 
@@ -33,6 +34,11 @@ class APIService {
             console.error(error);
             throw error;
         }
+    }
+
+    async getTimeZone(latitude, longitude) {
+        const response = await axios.get(`https://timeapi.io/api/Time/current/coordinate?latitude=${latitude}&longitude=${longitude}`);
+        return response.data;
     }
 
     async getRandomUsername() {

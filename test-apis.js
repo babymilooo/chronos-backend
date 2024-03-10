@@ -21,6 +21,7 @@ async function main() {
 
     let country = await APIService.getCountry(lat, lon);
     let holidays = await APIService.getHolidays("Ukrain", "2024");
+    let TZ = await APIService.getTimeZone(lat, lon);
 
     // sort by date (Jan -> Dec)
     holidays.sort((a, b) => {
@@ -31,6 +32,7 @@ async function main() {
 
     console.log(country);
     console.log(holidays);
+    console.log(TZ);
 
     const holidayCounts = countHolidaysByTypes(holidays);
     console.log('Holiday Counts by Type:', holidayCounts);
