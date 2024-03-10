@@ -9,9 +9,11 @@ const { fileHandler, upload } = require('../services/file-service');
 
 
 // can do admin and any authorized user
+router.get('/users/friends', authMiddleware, userController.getFriends);
 router.get('/users/:id', authMiddleware, userController.getUserById);
 router.get('/users', authMiddleware, userController.getUsers);
-
+router.post('/users/addtofriend/:id', authMiddleware, userController.addToFriend);
+router.get('/users/:id/isfriend', authMiddleware, userController.isFriend);
 // can do admin and user (account owner)
 router.patch('/users/update/:id', authMiddleware, adminOrOwnerMiddleware, userController.updateUserById);
 router.patch('/users/avatars', authMiddleware, upload.single('avatar'), fileHandler, userController.changeAvatar);
