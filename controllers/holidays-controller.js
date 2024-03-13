@@ -5,6 +5,7 @@ class HolidaysController {
     async getHolidays(req, res, next) {
         try {
             const { country, year, type } = req.query;
+            console.log(req.query);
             if (!country || !year) {
                 throw ApiError.BadRequest('Country or year is not defined');
             }

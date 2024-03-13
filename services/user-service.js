@@ -114,8 +114,6 @@ class UserService {
             // Получаем данные всех друзей
             const friendData = await userModel.find({ _id: { $in: friendIds } });
 
-            console.log('All possible friends:', friendData);
-
             const usersDto = friendData.map(friend => new UserDto(friend));
             return { users: usersDto };
         } catch (error) {

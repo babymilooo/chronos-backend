@@ -5,7 +5,7 @@ const holidaysModel = require("../models/holidays-model");
 const HolidayDTO = require("../dtos/holidays-dto");
 
 class HolidaysService {
-    async getHolidays(country, year, type) {
+    async getHolidays(country, year, type='major_holiday') {
         const isoCodeDocument = await countryIso.findOne({ countryName: country });
         if (!isoCodeDocument) {
             // Если страна не найдена, запрос к API для получения праздников
@@ -31,8 +31,7 @@ class HolidaysService {
             }
         } else {
             // Поиск праздников в базе данных по ISO коду и году
-            const holidays = await holidaysModel.findOne({ isoCode: isoCodeDocument._id, year: year, type: type });
-
+            const holidays = await holidaysModel.findOne({ isoCode: isoCodeDocument._id, year: year });
             if (!holidays || holidays.holidays.length === 0) {
                 // Если праздники не найдены, запрос к API
                 const holidaysFromApi = await apiService.getHolidays(country, year, type);
@@ -44,7 +43,8 @@ class HolidaysService {
                     holidays: holidaysFromApi.map(holiday => ({
                         name: holiday.name,
                         date: holiday.date,
-                        description: holiday.type
+                        day: holiday.day,
+                        type: holiday.type
                     }))
                 });
 
@@ -64,7 +64,7 @@ class HolidaysService {
                         type: holiday.type
                     });
                 });
-        
+
                 return holidaysDto;
             }
         }

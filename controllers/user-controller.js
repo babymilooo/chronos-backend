@@ -83,7 +83,6 @@ class UserController {
     async getFriends(req, res, next) {
         try {
             const id = req.user.id;
-            console.log(id);
             const friends = await userService.findAllPossibleFriends(id);
             return res.json(friends);
         } catch (e) {
