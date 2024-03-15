@@ -53,8 +53,9 @@ class AuthController {
     async activate(req, res, next) {
         try {
             const { email, activationPassword } = req.body;
+            console.log(email, activationPassword);
             await AuthService.activate(email, activationPassword);
-            return res.redirect(process.env.CLIENT_URL); // TODO: ensure that redirection works
+            return res.status(200).json({ message: 'Account has been activated' });
         } catch (e) {
             next(e);
         }
