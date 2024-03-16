@@ -16,14 +16,6 @@ const {
 class AuthService {
 
     async registration(email, password, username) {
-        if (!email) {
-            throw ApiError.BadRequest(`Email is not defined`);
-        }
-
-        if (!password) {
-            throw ApiError.BadRequest(`Password is not defined`);
-        }
-
         if (!username) {
             throw ApiError.BadRequest(`Username is not defined`);
         }
@@ -34,7 +26,7 @@ class AuthService {
             throw ApiError.BadRequest(`User exists`);
         }
 
-        const generatedPassword = PasswordService.generateTemporaryPassword(8);
+        const generatedPassword = PasswordService.generateTemporaryPassword(parseInt(process.env.ACTIVATION_PASSWORD_LENGTH, 10));
         const hashedPassword = await PasswordService.hashPassword(password);
         const hashedGeneratedPassword = await PasswordService.hashPassword(generatedPassword);
         const user = await UserModel.create({
@@ -54,10 +46,6 @@ class AuthService {
 
     async requestPasswordResetLink(email) {
         try {
-            if (!email) {
-                throw ApiError.BadRequest('Email is not defined');
-            }
-
             const user = await UserModel.findOne({ email });
 
             if (!user) {
@@ -113,14 +101,6 @@ class AuthService {
     }
 
     async login(email, password) {
-        if (!email) {
-            throw ApiError.BadRequest(`Email is not defined`);
-        }
-
-        if (!password) {
-            throw ApiError.BadRequest(`Password is not defined`);
-        }
-
         const user = await UserModel.findOne({ email: email });
 
         if (!user) {
@@ -198,7 +178,7 @@ class AuthService {
             throw ApiError.BadRequest(`User ${email} not found`);
         }
 
-        const generatedPassword = PasswordService.generateTemporaryPassword(8);
+        const generatedPassword = PasswordService.generateTemporaryPassword(parseInt(process.env.ACTIVATION_PASSWORD_LENGTH, 10));
         const hashedGeneratedPassword = await PasswordService.hashPassword(generatedPassword);
         user.activationPassword = hashedGeneratedPassword;
 
