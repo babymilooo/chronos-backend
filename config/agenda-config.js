@@ -49,7 +49,7 @@ agenda.define('check-inactive-users-notify-and-delete', async job => {
     const now = new Date();
 
     const notificateDays = [30, 14, 7, 3, 2, 1, 0];
-    const underWarning = process.env.INACTIVE_USER_DELETION_DAYS;
+    const underWarning = process.env.INACTIVE_USER_DELETION_DAYS || 365;
     const millisecondsDay = 1000 * 60 * 60 * 24;
 
     // $lt: less than
@@ -88,7 +88,7 @@ agenda.define('check-inactive-users-notify-and-delete', async job => {
 const startAgenda = async () => {
     await agenda.start();
     console.log("Agenda started");
-    await agenda.every(process.env.CRON_CHECK_INACTIVE_USERS, 'check-inactive-users-notify-and-delete');
+    await agenda.every(process.env.CRON_CHECK_INACTIVE_USERS || "0 0 * * *", 'check-inactive-users-notify-and-delete');
     console.log("Agenda job to check, notify and delte inactive users scheduled");
 };
 
@@ -98,7 +98,7 @@ const stopAgenda = async () => {
 };
 
 const jobResetPendingPasswordUpdateToFalse = async (email) => {
-    await agenda.schedule(`in ${process.env.RESET_TOKEN_EXPIRATION_TIME} minutes`, 'set-pending-password-update-to-false', { email });
+    await agenda.schedule(`in ${process.env.RESET_TOKEN_EXPIRATION_TIME || 60} minutes`, 'set-pending-password-update-to-false', { email });
 };
 
 const jobCancelPasswordPendingUpdateReset = async (email) => {
@@ -106,7 +106,7 @@ const jobCancelPasswordPendingUpdateReset = async (email) => {
 }
 
 const jobResetActivationPasswordToNull = async (email) => {
-    await agenda.schedule(`in ${process.env.ACTIVATION_PASSWORD_EXPIRATION_TIME} minutes`, 'clear-activation-password', { email });
+    await agenda.schedule(`in ${process.env.ACTIVATION_PASSWORD_EXPIRATION_TIME || 60} minutes`, 'clear-activation-password', { email });
 };
 
 const jobCancelActivationPasswordReset = async (email) => {

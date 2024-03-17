@@ -17,16 +17,18 @@ class AuthService {
 
     async registration(email, password, username) {
         if (!username) {
-            throw ApiError.BadRequest(`Username is not defined`);
+            console.error('Username is not defined, something wrong with api response');
+            throw ApiError.InternalServerError('Sorry, something went wrong');
         }
 
         const candidate = await UserModel.findOne({ email: email });
 
         if (candidate) {
-            throw ApiError.BadRequest(`User exists`);
+            console.error(`User with email: \'${email}\' exists`);
+            throw ApiError.ForbiddenError(`User exists`);
         }
 
-        const generatedPassword = PasswordService.generateTemporaryPassword(parseInt(process.env.ACTIVATION_PASSWORD_LENGTH, 10));
+        const generatedPassword = PasswordService.generateTemporaryPassword(parseInt(process.env.ACTIVATION_PASSWORD_LENGTH || 8, 10));
         const hashedPassword = await PasswordService.hashPassword(password);
         const hashedGeneratedPassword = await PasswordService.hashPassword(generatedPassword);
         const user = await UserModel.create({
@@ -49,11 +51,13 @@ class AuthService {
             const user = await UserModel.findOne({ email });
 
             if (!user) {
-                throw ApiError.BadRequest('User not found');
+                console.error(`User with email: \'${email}\' not found`);
+                throw ApiError.NotFound('User not found');
             }
 
             if (user.pendingPasswordUpdate) {
-                throw ApiError.BadRequest(`Please, use old link or request a new link no often each ${process.env.RESET_TOKEN_EXPIRATION_TIME} minutes`);
+                console.error(`Link has been used to email: \'${email}\'. Please request a new link.`);
+                throw ApiError.ForbiddenError(`Please, use old link or request a new link no often each ${process.env.RESET_TOKEN_EXPIRATION_TIME || 60} minutes`);
             }
             
             const resetToken = TokenService.generateResetPasswordToken(email);
@@ -68,27 +72,22 @@ class AuthService {
 
     async changePassword(newPassword, token) {
         try {
-            if (!token) {
-                throw ApiError.BadRequest('Token is not defined');
-            }
-
-            if (!newPassword) {
-                throw ApiError.BadRequest('New password is not defined');
-            }
-
             if (!TokenService.validateResetPasswordToken(token)) {
-                throw ApiError.BadRequest('Invalid token. Link has expired or is incorrect. Please request a new link.');
+                console.error('(password reset) Invalid token. Link has expired or is incorrect. Please request a new link.');
+                throw ApiError.ForbiddenError('Invalid token. Link has expired or is incorrect. Please request a new link.');
             }
 
             const email = TokenService.validateResetPasswordToken(token).email;
             const user = await UserModel.findOne({ email });
 
             if (!user) {
-                throw ApiError.BadRequest('User not found');
+                console.error(`(password reset) User with email: \'${email}\' not found`);
+                throw ApiError.NotFound('User not found');
             }
 
             if (user.pendingPasswordUpdate) {
-                throw ApiError.BadRequest('Link has been used. Please request a new link.');
+                console.error(`(password reset) Link for user \'${user}\' has been used or expired. Please request a new link.`);
+                throw ApiError.BadRequest('Link has been used or expired. Please request a new link.');
             }
 
             const hashedPassword = await PasswordService.hashPassword(newPassword);
@@ -104,13 +103,15 @@ class AuthService {
         const user = await UserModel.findOne({ email: email });
 
         if (!user) {
-            throw ApiError.BadRequest(`User ${email} not registered`);
+            console.error(`(login) User with email: \'${email}\' not registered`);
+            throw ApiError.NotFound(`User with email: \'${email}\' not registered`);
         }
 
         const isPassEquals = await PasswordService.comparePasswords(password, user.password);
 
         if (!isPassEquals) {
-            throw ApiError.BadRequest(`Incorrect password`);
+            console.error(`(login) Incorrect password for user with email: \'${email}\'`);
+            throw ApiError.ForbiddenError(`Incorrect password`);
         }
 
         const userDto = new UserDto(user);
@@ -130,12 +131,15 @@ class AuthService {
 
     async regenerateToken(refreshToken) {
         if (!refreshToken) {
+            console.error('(token regeneration) Refresh token is not defined');
             throw ApiError.UnauthorizedError();
         }
+
         const userData = TokenService.validateRefreshToken(refreshToken);
         const tokenFromDb = await TokenService.findToken(refreshToken);
 
         if (!userData || !tokenFromDb) {
+            console.error('(token regeneration) Invalid refresh token');
             throw ApiError.UnauthorizedError();
         }
 
@@ -153,15 +157,18 @@ class AuthService {
         const user = await UserModel.findOne({ email });
 
         if (!user) {
-            throw ApiError.BadRequest(`User ${email} not found`);
+            console.error(`(account activation) User with email: \'${email}\' not found`);
+            throw ApiError.NotFound(`User with email: \'${email}\' not found`);
         }
 
         if (user.isActivated) {
-            throw ApiError.BadRequest(`User ${email} is already activated`);
+            console.error(`(account activation) User with email: \'${email}\' is already activated`);
+            throw ApiError.ForbiddenError(`User with email: \'${email}\' is already activated`);
         }
 
         if (!(await PasswordService.comparePasswords(activationPassword, user.activationPassword))) {
-            throw ApiError.BadRequest(`Incorrect activation password`);
+            console.error(`(account activation) Incorrect activation password for user: \'${email}\'`);
+            throw ApiError.ForbiddenError(`Incorrect activation password`);
         }
 
         user.activationPassword = null;
@@ -175,10 +182,11 @@ class AuthService {
         const user = await UserModel.findOne({ email });
 
         if (!user) {
-            throw ApiError.BadRequest(`User ${email} not found`);
+            console.error(`(renew activation code) User with email: \'${email}\' not found`);
+            throw ApiError.NotFound(`User with email: \'${email}\' not found`);
         }
 
-        const generatedPassword = PasswordService.generateTemporaryPassword(parseInt(process.env.ACTIVATION_PASSWORD_LENGTH, 10));
+        const generatedPassword = PasswordService.generateTemporaryPassword(parseInt(process.env.ACTIVATION_PASSWORD_LENGTH || 8, 10));
         const hashedGeneratedPassword = await PasswordService.hashPassword(generatedPassword);
         user.activationPassword = hashedGeneratedPassword;
 

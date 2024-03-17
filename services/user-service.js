@@ -85,7 +85,7 @@ class UserService {
         return { updatedUser: userDto };
     }
 
-    async addToFriend(userId, friendId) {
+    async addToFriends(userId, friendId) {
         try {
             const friend = new FriendsModel({ user1: userId, user2: friendId });
             await friend.save();
