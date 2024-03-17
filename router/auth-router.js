@@ -12,9 +12,9 @@ const router = new Router();
 router.post('/activate', validator, authController.activate);
 router.post('/get-password-reset-link', validator, authController.requestPasswordResetLink);
 router.post('/login', validator, accountIsActivatedMiddleware, authController.login);
-router.post('/logout', validator, authController.logout);
+router.post('/logout', authController.logout);
 router.post('/password-reset/:link', validator, authController.changePassword);
-router.get('/refresh', validator, authController.refresh);
+router.get('/refresh', authController.refresh);
 router.post('/registration', validator, authController.registration);
 router.post('/renew-activation-code', validator, accountIsNotActivatedMiddleware, authController.renewActivationCode);
 

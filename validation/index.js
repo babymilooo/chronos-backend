@@ -1,6 +1,5 @@
 const authSchemas = require('./schemas/auth.js');
 const eventSchemas = require('./schemas/event.js');
-const holidaySchemas = require('./schemas/holiday.js');
 const userSchemas = require('./schemas/user.js');
 
 const schemas = {    
@@ -16,13 +15,9 @@ const schemas = {
 
     // Event routes
     '/events/event/:id': eventSchemas.getEventById,
-    '/events/yearly': eventSchemas.getYearlyEventsForUser,
-    '/events': eventSchemas.createEvent,
+    '/events': eventSchemas.events,
     '/events/update/:id': eventSchemas.updateEventById,
     '/events/delete/:id': eventSchemas.deleteEventById,
-
-    // Holiday (Calendar) routes
-    '/holidays': holidaySchemas.getHolidays,
 
     // User routes
     '/users/friends': userSchemas.getFriends,

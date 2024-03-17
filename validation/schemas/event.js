@@ -21,15 +21,13 @@ module.exports = {
             }),
         },
     },
-    getYearlyEventsForUser: {
+    events: {
         GET: {
             query: Joi.object({
                 year,
-                userId,
+                id: userId,
             }),
         },
-    },
-    createEvent: {
         POST: {
             body: Joi.object({
                 title,
