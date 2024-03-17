@@ -23,4 +23,8 @@ module.exports = class ApiError extends Error {
     static NotFound(message, errors = []) {
         return new ApiError(404, message, errors);
     }
+
+    static InternalServerError(errors = []) {
+        return new ApiError(500, "Internal Server Error", errors);
+    }
 }
