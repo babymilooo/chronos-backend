@@ -74,14 +74,11 @@ class EventService {
         const userCalendar = await createCalendarForUser(user, date);
 
         // Создать новое событие
-        const eventUniqueId = uuid.v4();
         const event = new Event({
             title,
             startTime: new Date(`${date}T${startTime}`),
             endTime: new Date(`${date}T${endTime}`),
-            creator: user,
             calendarId: userCalendar._id,
-            uniqueId: eventUniqueId,
             eventType: 'arrangement',
             user,
             coOwners,
@@ -101,13 +98,11 @@ class EventService {
                         title,
                         startTime: new Date(`${date}T${startTime}`),
                         endTime: new Date(`${date}T${endTime}`),
-                        creator: user, // Создатель события
                         calendarId: calendar._id,
-                        uniqueId: eventUniqueId,
                         eventType: 'arrangement',
-                        user: userId, // ID пользователя, который будет совладельцем или приглашенным
-                        coOwners: coOwners.includes(userId) ? [user, userId] : [user], // Если пользователь является совладельцем, то добавляем его и создателя события в список совладельцев
-                        followers: attendees.includes(userId) ? [user, userId] : [user] // Если пользователь является приглашенным, то добавляем его и создателя события в список приглашенных
+                        user: userId,
+                        coOwners: coOwners.includes(userId) ? [user, userId] : [user],
+                        followers: attendees.includes(userId) ? [user, userId] : [user]
                     });
                     await event.save();
                 });
