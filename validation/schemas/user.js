@@ -36,14 +36,12 @@ const userValidationSchemas = {
     },
     updateUserById: {
         PATCH: {
-            params: Joi.object({
-                id: userId,
-            }),
             body: Joi.object({
-                name: Joi.string().optional(),
-                email: email.optional(),
+                id: userId,
+                username: Joi.string().optional(),
+                bio: Joi.string().optional(),
                 password: password.optional(),
-                avatar: Joi.string().optional(),
+                image: Joi.string().optional(),
             }).min(1),
         },
     },
@@ -63,10 +61,6 @@ const userValidationSchemas = {
                 currentPassword: Joi.string().required(),
                 newPassword: Joi.string().required(),
             }),
-        },
-    },
-    changeAvatar: {
-        PATCH: {
         },
     },
 };
