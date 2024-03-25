@@ -130,11 +130,6 @@ class AuthService {
     }
 
     async regenerateToken(refreshToken) {
-        if (!refreshToken) {
-            console.error('(token regeneration) Refresh token is not defined');
-            throw ApiError.UnauthorizedError();
-        }
-
         const userData = TokenService.validateRefreshToken(refreshToken);
         const tokenFromDb = await TokenService.findToken(refreshToken);
 

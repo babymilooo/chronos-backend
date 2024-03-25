@@ -1,8 +1,12 @@
-const userModel = require('../models/user-model');
+const UserModel = require('../models/user-model');
 const UserDto = require('../dtos/user-dto');
 const ApiError = require('../exeptions/api-error');
 const PasswordService = require('./password-services');
 const FriendsModel = require('../models/friends-model');
+const fs = require('fs');
+const path = require('path');
+const crypto = require('crypto');
+
 /*
     { new: true } - return the modified document (after the update)
     { new: false } - return the original document (before the update)
@@ -10,55 +14,76 @@ const FriendsModel = require('../models/friends-model');
 
 class UserService {
     async getAllUsers(id) {
-        const users = await userModel.find({ _id: { $ne: id } });
+        const users = await UserModel.find({ _id: { $ne: id } });
         const usersDto = users.map(user => new UserDto(user));
         return { users: usersDto };
     }
 
     async getUserById(id) {
-        if (!id) {
-            throw ApiError.BadRequest('Id is not defined');
+        const user = await UserModel.findById(id);
+
+        if (user.image === null) {
+            user.image = 'default.png';
         }
 
-        const user = await userModel.findById(id);
+        user.image = 'http://localhost:5001/api/user/avatar/' + user.image;
         return new UserDto(user);
     }
 
-    async updateUserById(id, data) {
-        const updatedUser = await userModel.findByIdAndUpdate(id, data, { new: true, runValidators: true });
+    async updateUserById(id, updateData, file) {
+        if (file) {
+            const hash = crypto.createHash('sha256').update(file.buffer).digest('hex');
+            const fileName = `${hash}-${file.originalname}`;
+            const filePath = path.join(__dirname, '..', 'uploads', 'avatars', fileName);
+
+            fs.mkdirSync(path.dirname(filePath), { recursive: true });
+            fs.writeFileSync(filePath, file.buffer);
+
+            updateData.image = fileName;
+        }
+
+        const updatedUser = await UserModel.findByIdAndUpdate(id, updateData, { new: true });
 
         if (!updatedUser) {
             throw ApiError.BadRequest(`User not found`);
-        };
-
-        const userDto = new UserDto(updatedUser);
-        return { updatedUser: userDto };
+        }
+    
+        return new UserDto(updatedUser);
     }
 
-    async deleteUserById(id) {
-        if (!id) {
-            throw ApiError.BadRequest('Id is not defined');
-        }
+    async getAllFriends(userId) {
+        try {
+            const friendships = await FriendsModel.find({
+                $or: [{ user1: userId }, { user2: userId }]
+            });
 
+            const friendIds = friendships.map(friendship => 
+                friendship.user1.toString() === userId ? friendship.user2 : friendship.user1
+            );
+
+            const friends = await UserModel.find({ _id: { $in: friendIds } });
+    
+            const friendsData = friends.map(friend => ({
+                id: friend._id,
+                name: friend.username,
+                image: friend.image ? `http://localhost:5001/api/user/avatar/${friend.image}` : 'http://localhost:5001/api/user/avatar/default.png',
+            }));
+    
+            return friendsData;
+        } catch (error) {
+            console.error('Error getting all friends:', error);
+            throw error;
+        }
+    }    
+
+    async deleteUserById(id) {
         const login = user.login;
-        await userModel.findByIdAndDelete(id);
+        await UserModel.findByIdAndDelete(id);
         return login;
     }
 
     async updateProfilePassword(id, oldPassword, newPassword) {
-        if (!id) {
-            throw ApiError.BadRequest('Id is not defined');
-        }
-
-        if (!password) {
-            throw ApiError.BadRequest('Password is not defined');
-        }
-
-        if (password.length < process.env.PASSWORD_MIN_LENGTH) {
-            throw ApiError.BadRequest('Password is too short');
-        }
-
-        const user = await userModel.findById(id);
+        const user = await UserModel.findById(id);
         const isPassEquals = await PasswordService.comparePasswords(oldPassword, user.password);
 
         if (!isPassEquals) {
@@ -66,23 +91,8 @@ class UserService {
         }
 
         const hashPassword = await PasswordService.hashPassword(newPassword);
-        const updatedUser = await userModel.findByIdAndUpdate(id, { password: hashPassword }, { new: true });
+        const updatedUser = await UserModel.findByIdAndUpdate(id, { password: hashPassword }, { new: true });
         return new UserDto(updatedUser);
-    }
-
-    async updateProfileImage(userId, fileUrl) {
-        const updatedUser = await userModel.findByIdAndUpdate(
-            userId,
-            { profilePicture: fileUrl },
-            { new: true, runValidators: true }
-        );
-
-        if (!updatedUser) {
-            throw ApiError.BadRequest(`User not found`);
-        };
-
-        const userDto = new UserDto(updatedUser);
-        return { updatedUser: userDto };
     }
 
     async addToFriends(userId, friendId) {
@@ -112,7 +122,7 @@ class UserService {
             }, []);
 
             // Получаем данные всех друзей
-            const friendData = await userModel.find({ _id: { $in: friendIds } });
+            const friendData = await UserModel.find({ _id: { $in: friendIds } });
 
             const usersDto = friendData.map(friend => new UserDto(friend));
             return { users: usersDto };
