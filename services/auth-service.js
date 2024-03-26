@@ -59,7 +59,7 @@ class AuthService {
                 console.error(`Link has been used to email: \'${email}\'. Please request a new link.`);
                 throw ApiError.ForbiddenError(`Please, use old link or request a new link no often each ${process.env.RESET_TOKEN_EXPIRATION_TIME || 60} minutes`);
             }
-            
+
             const resetToken = TokenService.generateResetPasswordToken(email);
             await UserModel.findOneAndUpdate({ email }, { pendingPasswordUpdate: true });
             await EmailsService.sendPasswordResetMail(email, `${process.env.API_URL}/api/auth/password-reset/${resetToken}`);
@@ -136,9 +136,15 @@ class AuthService {
         }
 
         const userData = TokenService.validateRefreshToken(refreshToken);
+
+        if (!userData) {
+            console.error('(token regeneration) validate refresh token');
+            throw ApiError.UnauthorizedError();
+        }
+
         const tokenFromDb = await TokenService.findToken(refreshToken);
 
-        if (!userData || !tokenFromDb) {
+        if (!tokenFromDb) {
             console.error('(token regeneration) Invalid refresh token');
             throw ApiError.UnauthorizedError();
         }

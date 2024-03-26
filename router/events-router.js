@@ -7,7 +7,7 @@ const validator = require('../middlewares/validator');
 
 router.get('/events/event/:id', validator, authMiddleware, eventController.getEventById);
 router.get('/events', validator, authMiddleware, eventController.getYearlyEventsForUser);
-router.post('/events', validator, authMiddleware, eventController.createEvent);
+router.post('/events', authMiddleware, eventController.createEvent);
 router.patch('/events/update/:id', validator, authMiddleware, adminOrOwnerMiddleware, eventController.updateEventById);
 router.delete('/events/delete/:id', validator, authMiddleware, adminOrOwnerMiddleware, eventController.deleteEventById);
 module.exports = router;
