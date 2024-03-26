@@ -51,30 +51,39 @@ class UserService {
         return new UserDto(updatedUser);
     }
 
-    async getAllFriends(userId) {
+    async getAllFriends(userId, myID) {
         try {
             const friendships = await FriendsModel.find({
                 $or: [{ user1: userId }, { user2: userId }]
             });
-
+    
             const friendIds = friendships.map(friendship => 
                 friendship.user1.toString() === userId ? friendship.user2 : friendship.user1
             );
-
+    
             const friends = await UserModel.find({ _id: { $in: friendIds } });
     
-            const friendsData = friends.map(friend => ({
-                id: friend._id,
-                name: friend.username,
-                image: friend.image ? `http://localhost:5001/api/user/avatar/${friend.image}` : 'http://localhost:5001/api/user/avatar/default.png',
+            const friendsData = await Promise.all(friends.map(async (friend) => {
+                const isFriend = await FriendsModel.findOne({
+                    $or: [
+                        { user1: myID, user2: friend._id },
+                        { user1: friend._id, user2: myID }
+                    ]
+                });
+    
+                return {
+                    id: friend._id,
+                    name: friend.username,
+                    image: friend.image ? `http://localhost:5001/api/user/avatar/${friend.image}` : 'http://localhost:5001/api/user/avatar/default.png',
+                    isFriend: !!isFriend 
+                };
             }));
     
             return friendsData;
-        } catch (error) {
-            console.error('Error getting all friends:', error);
-            throw error;
+        } catch (e) {
+            throw ApiError.BadRequest('Error getting friends');
         }
-    }    
+    }
 
     async deleteUserById(id) {
         const login = user.login;

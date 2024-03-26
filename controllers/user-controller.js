@@ -46,7 +46,7 @@ class UserController {
             const file = req.file;
 
             const updatedUser = await userService.updateUserById(id, updateData, file);
-            return res.json(new UserDto(updatedUser));
+            return res.json(updatedUser);
         } catch (error) {
             next(error);
         }
@@ -55,7 +55,8 @@ class UserController {
     async getAllFriends(req, res, next) {
         try {
             const id = req.params.id;
-            const friends = await userService.getAllFriends(id);
+            const myID = req.user.id;
+            const friends = await userService.getAllFriends(id, myID);
             return res.json(friends);
         } catch (e) {
             next(e);
