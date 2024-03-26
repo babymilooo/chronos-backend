@@ -34,12 +34,7 @@ module.exports = {
     },
     refreshToken: {
         GET: {
-            cookie: Joi.object({
-                refreshToken,
-            }).unknown(),
-        },
-        POST: {
-            body: Joi.object({
+            cookies: Joi.object({
                 refreshToken,
             }),
         },

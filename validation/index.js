@@ -25,7 +25,7 @@ const schemas = {
     '/users': userSchemas.getUsers,
     '/users/addtofriend/:id': userSchemas.addToFriends,
     '/users/:id/isfriend': userSchemas.isFriend,
-    '/users/update/:id': userSchemas.updateUserById,
+    '/users/update/': userSchemas.updateUserById,
     '/users/delete/:id': userSchemas.deleteUserById,
     '/users/update/:id/password': userSchemas.updateProfilePassword,
 };

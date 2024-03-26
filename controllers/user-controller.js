@@ -1,4 +1,6 @@
 const userService = require("../services/user-service");
+const path = require('path');
+const fs = require('fs');
 
 class UserController {
     async getUsers(req, res, next) {
@@ -21,14 +23,41 @@ class UserController {
         }
     }
 
+    async getAvatar(req, res, next) {
+        try {
+            const { filename } = req.params;
+            const filePath = path.join(__dirname, '..', 'uploads', 'avatars', filename);
+
+            if (!fs.existsSync(filePath)) {
+                return res.status(404).send('File not found');
+            }
+
+            res.sendFile(filePath);
+        } catch (e) {
+            next(e);
+        }
+    }
+
     async updateUserById(req, res, next) {
         try {
-            const { id } = req.params;
-            const newUserData = req.body;
+            const id = req.params.id;
+            const { username, bio } = req.body;
+            const updateData = { username, bio };
+            const file = req.file;
 
-            const user = await userService.updateUserById(id, newUserData);
+            const updatedUser = await userService.updateUserById(id, updateData, file);
+            return res.json(updatedUser);
+        } catch (error) {
+            next(error);
+        }
+    }
 
-            return res.json(user);
+    async getAllFriends(req, res, next) {
+        try {
+            const id = req.params.id;
+            const myID = req.user.id;
+            const friends = await userService.getAllFriends(id, myID);
+            return res.json(friends);
         } catch (e) {
             next(e);
         }
@@ -50,20 +79,6 @@ class UserController {
             const { oldPassword, newPassword } = req.body;
             const user = await userService.updateProfilePassword(id, oldPassword, newPassword);
             return res.json(user);
-        } catch (e) {
-            next(e);
-        }
-    }
-
-    async changeAvatar(req, res, next) {
-        try {
-            const file = req.file;
-            console.log(file);
-            const fileUrl = `${req.protocol}://${req.get('host')}/${file.path}`;
-            const userId = req.body.userId;
-            console.log(userId);
-            await userService.updateProfileImage(userId, fileUrl);
-            return res.status(200).json({ profilePicture: fileUrl });
         } catch (e) {
             next(e);
         }

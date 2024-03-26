@@ -10,8 +10,7 @@ const UserModel = new Schema({
     pendingPasswordUpdate: { type: Boolean, default: false },
     isActivated: { type: Boolean, default: false },
     lastActive: { type: Date, default: Date.now },
-    timezone: { type: String, default: null },
-    // activationLink: { type: String },
+    // timezone: { type: String, default: null },
 });
 
 module.exports = model('User', UserModel);
