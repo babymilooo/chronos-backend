@@ -84,11 +84,22 @@ class UserController {
         }
     }
 
-    async addToFriends(req, res, next) {
+    async addFriend(req, res, next) {
         try {
             const { id } = req.params;
             const userId = req.user.id;
-            const user = await userService.addToFriends(userId, id);
+            const user = await userService.addFriend(userId, id);
+            return res.json(user);
+        } catch (e) {
+            next(e);
+        }
+    }
+
+    async removeFriend(req, res, next) {
+        try {
+            const { id } = req.params;
+            const userId = req.user.id;
+            const user = await userService.removeFriend(userId, id);
             return res.json(user);
         } catch (e) {
             next(e);

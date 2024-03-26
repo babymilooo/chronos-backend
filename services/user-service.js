@@ -104,13 +104,29 @@ class UserService {
         return new UserDto(updatedUser);
     }
 
-    async addToFriends(userId, friendId) {
+    async addFriend(userId, friendId) {
         try {
+            if (userId === friendId) {
+                throw ApiError.BadRequest('You cannot add yourself as a friend');
+            }
+
             const friend = new FriendsModel({ user1: userId, user2: friendId });
             await friend.save();
             console.log('Added friend successfully');
         } catch (error) {
             console.error('Error adding friend:', error);
+        }
+    }
+
+    async removeFriend(userId, friendId) {
+        try {
+            await FriendsModel.deleteOne({ $or: [
+                { user1: userId, user2: friendId },
+                { user1: friendId, user2: userId }
+            ] });
+            console.log('Removed friend successfully');
+        } catch (error) {
+            console.error('Error removing friend:', error);
         }
     }
 

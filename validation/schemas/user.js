@@ -20,8 +20,15 @@ const userValidationSchemas = {
         GET: {
         },
     },
-    addToFriends: {
+    addFriend: {
         POST: {
+            params: Joi.object({
+                id: userId,
+            }),
+        },
+    },
+    removeFriend: {
+        DELETE: {
             params: Joi.object({
                 id: userId,
             }),
