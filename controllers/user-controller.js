@@ -126,6 +126,16 @@ class UserController {
             next(e);
         }
     }
+
+    async getPotentialFriends(req, res, next) {
+        try {
+            const id = req.user.id;
+            const potentialFriends = await userService.getPotentialFriends(id);
+            return res.json(potentialFriends);
+        } catch (e) {
+            next(e);
+        }
+    }
 }
 
 module.exports = new UserController();

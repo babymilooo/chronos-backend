@@ -172,6 +172,29 @@ class UserService {
             throw error;
         }
     }
+
+    async getPotentialFriends(id) {
+        try {
+            const friends = await FriendsModel.find({ $or: [{ user1: id }, { user2: id }] });
+            const friendIds = friends.reduce((ids, friend) => {
+                if (friend.user1.toString() !== id) {
+                    ids.push(friend.user1);
+                }
+                if (friend.user2.toString() !== id) {
+                    ids.push(friend.user2);
+                }
+                return ids;
+            }, []);
+
+            const notFriends = await UserModel.find({ _id: { $nin: friendIds } });
+            notFriends.splice(notFriends.findIndex(user => user._id.toString() === id), 1);
+            const usersDto = notFriends.map(notFriend => new UserDto(notFriend));
+            return { users: usersDto };
+        } catch (error) {
+            console.error('Error getting not friends:', error);
+            throw error;
+        }
+    }
 }
 
 module.exports = new UserService();
