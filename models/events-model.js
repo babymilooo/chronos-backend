@@ -19,7 +19,7 @@ const EventModel = new Schema({
     },
     repeat: {
         type: String,
-        enum: ['daily', 'weekly', 'monthly', 'custom'],
+        enum: ['daily', 'weekly', 'monthly', 'do not repeat'],
         default: 'daily',
         // customDays: { type: [Number], default: [] }, // For custom repeat, array of days (0-6, Sunday-Saturday)
     },

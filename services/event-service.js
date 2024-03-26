@@ -54,7 +54,7 @@ class EventService {
         return event;
     }
 
-    async createEvent({ startDate, endDate, startTime, endTime, title, user, coOwners = [], attendees = [] }) {
+    async createEvent({ title, startDate, endDate, startTime, endTime, eventType, repeat, priority, coOwners, attendees, user }) {
         console.log(startDate, endDate, startTime, endTime, title, user, coOwners, attendees);
         // Проверка входных данных
         if (!startTime || !endTime || !title || !user) {
@@ -83,7 +83,9 @@ class EventService {
                     endTime: new Date(`${date}T${endTime}`),
                     user: user,
                     calendarId: calendar._id,
-                    eventType: 'arrangement',
+                    eventType: eventType,
+                    repeat: repeat,
+                    priority: priority,
                     coOwners,
                     followers: attendees
                 });
@@ -128,53 +130,6 @@ class EventService {
             }
         }
 
-        // Создание календаря для основного пользователя
-        // const userCalendar = await createCalendarForUser(user, date);
-
-        // Создать новое событие
-        // const eventUniqueId = uuid.v4();
-        // const event = new Event({
-        //     title,
-        //     startTime: new Date(`${date}T${startTime}`),
-        //     endTime: new Date(`${date}T${endTime}`),
-        //     creator: user,
-        //     calendarId: userCalendar._id,
-        //     uniqueId: eventUniqueId,
-        //     eventType: 'arrangement',
-        //     user,
-        //     coOwners,
-        //     followers: attendees
-        // });
-
-        // await event.save();
-
-        // if (coOwners.length > 0 || attendees.length > 0) {
-        //     const createCalendarsAndEventsForUsers = async (users, date) => {
-        //         const userIds = Object.values(users);
-        //         console.log(userIds);
-        //         const promises = userIds.map(async (userId) => {
-        //             const calendar = await createCalendarForUser(userId, date);
-
-        //             const event = new Event({
-        //                 title,
-        //                 startTime: new Date(`${date}T${startTime}`),
-        //                 endTime: new Date(`${date}T${endTime}`),
-        //                 creator: user, // Создатель события
-        //                 calendarId: calendar._id,
-        //                 uniqueId: eventUniqueId,
-        //                 eventType: 'arrangement',
-        //                 user: userId, // ID пользователя, который будет совладельцем или приглашенным
-        //                 coOwners: coOwners.includes(userId) ? [user, userId] : [user], // Если пользователь является совладельцем, то добавляем его и создателя события в список совладельцев
-        //                 followers: attendees.includes(userId) ? [user, userId] : [user] // Если пользователь является приглашенным, то добавляем его и создателя события в список приглашенных
-        //             });
-        //             await event.save();
-        //         });
-        //         await Promise.all(promises);
-        //     };
-
-        //     await createCalendarsAndEventsForUsers(coOwners.concat(attendees), date);
-        // }
-
         if (coOwners.length > 0 || attendees.length > 0) {
             const createCalendarsAndEventsForUsers = async (users, dates) => {
                 for (const date of dates) {
@@ -185,9 +140,11 @@ class EventService {
                             title,
                             startTime: new Date(`${date}T${startTime}`),
                             endTime: new Date(`${date}T${endTime}`),
-                            creator: user,
-                            calendarId,
-                            eventType: 'arrangement',
+                            user: user,
+                            calendarId: calendarId,
+                            eventType: eventType,
+                            repeat: repeat,
+                            priority: priority,
                             coOwners: coOwners.includes(userId) ? [user, userId] : [user],
                             followers: attendees.includes(userId) ? [user, userId] : [user]
                         });
