@@ -10,9 +10,11 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 router.get('/users/friends', validator, authMiddleware, userController.getFriends);
+router.get('/users/potential-friends', authMiddleware, userController.getPotentialFriends);
 router.get('/users/:id', validator, authMiddleware, userController.getUserById);
 router.get('/users', validator, authMiddleware, userController.getUsers);
-router.post('/users/addtofriend/:id', validator, authMiddleware, userController.addToFriends);
+router.post('/users/add-friend/:id', validator, authMiddleware, userController.addFriend);
+router.delete('/users/remove-friend/:id', validator, authMiddleware, userController.removeFriend);
 router.get('/users/:id/isfriend', validator, authMiddleware, userController.isFriend);
 
 router.get('/user/avatar/:filename', userController.getAvatar);

@@ -104,13 +104,29 @@ class UserService {
         return new UserDto(updatedUser);
     }
 
-    async addToFriends(userId, friendId) {
+    async addFriend(userId, friendId) {
         try {
+            if (userId === friendId) {
+                throw ApiError.BadRequest('You cannot add yourself as a friend');
+            }
+
             const friend = new FriendsModel({ user1: userId, user2: friendId });
             await friend.save();
             console.log('Added friend successfully');
         } catch (error) {
             console.error('Error adding friend:', error);
+        }
+    }
+
+    async removeFriend(userId, friendId) {
+        try {
+            await FriendsModel.deleteOne({ $or: [
+                { user1: userId, user2: friendId },
+                { user1: friendId, user2: userId }
+            ] });
+            console.log('Removed friend successfully');
+        } catch (error) {
+            console.error('Error removing friend:', error);
         }
     }
 
@@ -153,6 +169,29 @@ class UserService {
             return { isFriend: !!friend };
         } catch (error) {
             console.error('Error checking if user is friend:', error);
+            throw error;
+        }
+    }
+
+    async getPotentialFriends(id) {
+        try {
+            const friends = await FriendsModel.find({ $or: [{ user1: id }, { user2: id }] });
+            const friendIds = friends.reduce((ids, friend) => {
+                if (friend.user1.toString() !== id) {
+                    ids.push(friend.user1);
+                }
+                if (friend.user2.toString() !== id) {
+                    ids.push(friend.user2);
+                }
+                return ids;
+            }, []);
+
+            const notFriends = await UserModel.find({ _id: { $nin: friendIds } });
+            notFriends.splice(notFriends.findIndex(user => user._id.toString() === id), 1);
+            const usersDto = notFriends.map(notFriend => new UserDto(notFriend));
+            return { users: usersDto };
+        } catch (error) {
+            console.error('Error getting not friends:', error);
             throw error;
         }
     }

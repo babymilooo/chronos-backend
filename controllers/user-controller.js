@@ -84,11 +84,22 @@ class UserController {
         }
     }
 
-    async addToFriends(req, res, next) {
+    async addFriend(req, res, next) {
         try {
             const { id } = req.params;
             const userId = req.user.id;
-            const user = await userService.addToFriends(userId, id);
+            const user = await userService.addFriend(userId, id);
+            return res.json(user);
+        } catch (e) {
+            next(e);
+        }
+    }
+
+    async removeFriend(req, res, next) {
+        try {
+            const { id } = req.params;
+            const userId = req.user.id;
+            const user = await userService.removeFriend(userId, id);
             return res.json(user);
         } catch (e) {
             next(e);
@@ -111,6 +122,16 @@ class UserController {
             const userId = req.user.id;
             const isFriend = await userService.isFriend(userId, id);
             return res.json(isFriend);
+        } catch (e) {
+            next(e);
+        }
+    }
+
+    async getPotentialFriends(req, res, next) {
+        try {
+            const id = req.user.id;
+            const potentialFriends = await userService.getPotentialFriends(id);
+            return res.json(potentialFriends);
         } catch (e) {
             next(e);
         }
