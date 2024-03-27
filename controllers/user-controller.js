@@ -1,6 +1,7 @@
 const userService = require("../services/user-service");
 const path = require('path');
 const fs = require('fs');
+const ApiError = require("../exeptions/api-error");
 
 class UserController {
     async getUsers(req, res, next) {
@@ -44,7 +45,6 @@ class UserController {
             const { username, bio } = req.body;
             const updateData = { username, bio };
             const file = req.file;
-
             const updatedUser = await userService.updateUserById(id, updateData, file);
             return res.json(updatedUser);
         } catch (error) {
@@ -88,6 +88,11 @@ class UserController {
         try {
             const { id } = req.params;
             const userId = req.user.id;
+
+            if (userId === id) {
+                throw ApiError.BadRequest('You cannot add yourself as a friend');
+            }
+
             const user = await userService.addFriend(userId, id);
             return res.json(user);
         } catch (e) {
