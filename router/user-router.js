@@ -18,7 +18,7 @@ router.delete('/users/remove-friend/:id', validator, authMiddleware, userControl
 router.get('/users/:id/isfriend', validator, authMiddleware, userController.isFriend);
 
 router.get('/user/avatar/:filename', userController.getAvatar);
-router.put('/users/:id/update', authMiddleware, upload.single('image'), userController.updateUserById);
+router.put('/users/update', authMiddleware, upload.single('image'), userController.updateUserById);
 router.get('/users/:id/friends', authMiddleware, userController.getAllFriends);
 // router.delete('/users/delete/:id', validator, authMiddleware, adminOrOwnerMiddleware, userController.deleteUserById);
 // router.patch('/users/update/:id/password', validator, authMiddleware, adminOrOwnerMiddleware, userController.updateProfilePassword);

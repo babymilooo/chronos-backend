@@ -1,7 +1,7 @@
 const Joi = require('joi');
 const { userId, email, password } = require('../helpers/common-schemas');
 
-const userValidationSchemas = {
+module.exports = {
     getFriends: {
         GET: {
             params: Joi.object({
@@ -42,13 +42,11 @@ const userValidationSchemas = {
         },
     },
     updateUserById: {
-        PATCH: {
+        PUT: {
             body: Joi.object({
-                id: userId,
-                username: Joi.string().min(3).max(30).optional(),
-                bio: Joi.string().min(3).max(100).optional(),
-                image: Joi.string().optional(),
-            }).min(1),
+                username: Joi.string().min(3).max(30).required(),
+                bio: Joi.string().min(3).max(100).required(),
+            }),
         },
     },
     deleteUserById: {
@@ -70,5 +68,3 @@ const userValidationSchemas = {
         },
     },
 };
-
-module.exports = userValidationSchemas;

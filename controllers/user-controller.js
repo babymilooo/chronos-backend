@@ -41,9 +41,18 @@ class UserController {
 
     async updateUserById(req, res, next) {
         try {
-            const id = req.params.id;
+            const id = req.user.id;
             const { username, bio } = req.body;
             const updateData = { username, bio };
+
+            if (username.length < 3 || username.length > 30) {
+                throw ApiError.BadRequest('Username must be between 3 and 30 characters');
+            }
+
+            if (bio.length < 3 || bio.length > 100) {
+                throw ApiError.BadRequest('Bio must be between 3 and 100 characters');
+            }
+
             const file = req.file;
             const updatedUser = await userService.updateUserById(id, updateData, file);
             return res.json(updatedUser);
