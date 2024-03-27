@@ -55,11 +55,11 @@ class EventService {
     }
 
     async createEvent({ title, startDate, endDate, startTime, endTime, eventType, repeat, priority, coOwners, attendees, user }) {
-        console.log(startDate, endDate, startTime, endTime, title, user, coOwners, attendees);
         // Проверка входных данных
         if (!startTime || !endTime || !title || !user) {
             ApiError.BadRequest('All fields are required');
         }
+
 
         // Найти или создать календарь для даты и пользователя
         const createCalendarForUser = async (userId, date) => {
@@ -72,15 +72,15 @@ class EventService {
             return calendar;
         };
 
-        const createEventForDate = async (date) => {
+        const createEventForDate = async (date, startDate, endDate) => {
             console.log(date);
             console.log(startTime, endTime);
             const calendar = await createCalendarForUser(user, date);
             try {
                 const event = new Event({
                     title,
-                    startTime: new Date(`${date}T${startTime}`),
-                    endTime: new Date(`${date}T${endTime}`),
+                    startTime: new Date(`${startDate}T${startTime}`),
+                    endTime: new Date(`${endDate}T${endTime}`),
                     user: user,
                     calendarId: calendar._id,
                     eventType: eventType,
@@ -111,55 +111,87 @@ class EventService {
             return dates.map(date => date.toISOString().split('T')[0]);
         }
 
-        const start = new Date(startDate);
-        const end = new Date(endDate);
-        const diffTime = Math.abs(end - start);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        // async function associateEventsWithCalendars(events, users) {
+        //     // Получаем ID календарей для каждого пользователя
+        //     const dates = getDatesInRange(startDate, endDate);
+        //     let calendarIdsPerUser = [];
+        //     for (const date of dates) {
+        //         calendarIdsPerUser = await Promise.all(
+        //             users.map(userId => createCalendarForUser(userId, date))
+        //         );
+        //     }
+        //     // Развертываем массивы, чтобы получить один массив ID календарей
+        //     const calendarIds = calendarIdsPerUser.map(calendar => calendar._id);
 
-        console.log("dife", diffDays);
-        let events = [];
-        if (diffDays === 0) {
-            // Если даты одинаковые, создаем одно событие
-            events.push(await createEventForDate(startDate));
-        } else {
-            // Если даты разные, создаем событие для каждого дня
-            for (let i = 0; i <= diffDays; i++) {
-                const date = new Date(start);
-                date.setDate(date.getDate() + i);
-                events.push(await createEventForDate(date.toISOString().split('T')[0]));
-            }
-        }
+        //     // Связываем каждое событие с календарями
+        //     for (const event of events) {
+        //         await linkEventToCalendars(event._id, calendarIds);
+        //     }
+        // }
 
-        if (coOwners.length > 0 || attendees.length > 0) {
-            const createCalendarsAndEventsForUsers = async (users, dates) => {
-                for (const date of dates) {
-                    const promises = users.map(async (userId) => {
-                        const calendarId = await createCalendarForUser(userId, date);
+        // async function linkEventToCalendars(eventId, calendarIds) {
+        //     try {
 
-                        const event = new Event({
-                            title,
-                            startTime: new Date(`${date}T${startTime}`),
-                            endTime: new Date(`${date}T${endTime}`),
-                            user: user,
-                            calendarId: calendarId,
-                            eventType: eventType,
-                            repeat: repeat,
-                            priority: priority,
-                            coOwners: coOwners.includes(userId) ? [user, userId] : [user],
-                            followers: attendees.includes(userId) ? [user, userId] : [user]
-                        });
-                        await event.save();
-                    });
-                    await Promise.all(promises);
+        //         for (const calendarId of calendarIds) {
+        //             await calendarModel.findByIdAndUpdate(
+        //                 calendarId._id,
+        //                 { $push: { events: eventId } },
+        //                 { new: true }
+        //             );
+        //         }
+        //     } catch (error) {
+        //         console.error('Failed to link event to calendars', error);
+        //         throw error; // Вы можете выбросить ошибку, если что-то пошло не так
+        //     }
+        // }
+
+
+        const mainCalendar = await createCalendarForUser(user, startDate);
+        const mainEvent = await new Event({
+            title,
+            startTime: new Date(`${startDate}T${startTime}`),
+            endTime: new Date(`${endDate}T${endTime}`),
+            user: user,
+            calendarId: mainCalendar._id,
+            eventType: eventType,
+            repeat: repeat,
+            priority: priority,
+            coOwners,
+            followers: attendees
+        }).save();
+
+        const allUserIds = [user, ...coOwners, ...attendees];
+
+        // Удаляем дубликаты идентификаторов пользователей
+        const uniqueUserIds = [...new Set(allUserIds)];
+        const dates = getDatesInRange(startDate, endDate);
+
+        for (const date of dates) {
+            const userCalendars = await Promise.all(
+                uniqueUserIds.map(userId => createCalendarForUser(userId, date))
+            );
+
+            // Дублирование основного события в каждый календарь
+            const duplicationPromises = userCalendars.map(async (userCalendar) => {
+                // Если календарь принадлежит главному пользователю и это стартовая дата, дублирование не требуется
+                if (userCalendar.userId.toString() === user.toString() && date === startDate) {
+                    return;
                 }
-            };
 
-            const dates = getDatesInRange(startDate, endDate);
-            await createCalendarsAndEventsForUsers(coOwners.concat(attendees), dates);
+                // Дублируем событие
+                return await new Event({
+                    ...mainEvent.toObject(),
+                    calendarId: userCalendar._id,
+                    _id: undefined, // Сбросить ID для создания нового документа
+                    isDuplicate: true, // Помечаем событие как дубликат
+                    originalEvent: mainEvent._id // Связываем дубликат с основным событием
+                }).save();
+            });
+
+            await Promise.all(duplicationPromises);
         }
 
-        console.log(events);
-        return events;
+        return mainEvent; // Возвращаем основное событие
     }
 
     async updateEventById(id, data) {
