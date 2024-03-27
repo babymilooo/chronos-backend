@@ -45,9 +45,8 @@ const userValidationSchemas = {
         PATCH: {
             body: Joi.object({
                 id: userId,
-                username: Joi.string().optional(),
-                bio: Joi.string().optional(),
-                password: password.optional(),
+                username: Joi.string().min(3).max(30).optional(),
+                bio: Joi.string().min(3).max(100).optional(),
                 image: Joi.string().optional(),
             }).min(1),
         },

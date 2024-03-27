@@ -31,6 +31,8 @@ class UserService {
     }
 
     async updateUserById(id, updateData, file) {
+        const user = await UserModel.findById(id);
+
         if (file) {
             const hash = crypto.createHash('sha256').update(file.buffer).digest('hex');
             const fileName = `${hash}-${file.originalname}`;
@@ -39,15 +41,18 @@ class UserService {
             fs.mkdirSync(path.dirname(filePath), { recursive: true });
             fs.writeFileSync(filePath, file.buffer);
 
+            if (user.image && user.image !== 'default.png') {
+                const deleteFile = path.join(__dirname, '..', 'uploads', 'avatars', user.image);
+
+                if (fs.existsSync(deleteFile)) {
+                    fs.unlinkSync(deleteFile);
+                }
+            }
+
             updateData.image = fileName;
         }
 
         const updatedUser = await UserModel.findByIdAndUpdate(id, updateData, { new: true });
-
-        if (!updatedUser) {
-            throw ApiError.BadRequest(`User not found`);
-        }
-    
         return new UserDto(updatedUser);
     }
 
@@ -106,10 +111,6 @@ class UserService {
 
     async addFriend(userId, friendId) {
         try {
-            if (userId === friendId) {
-                throw ApiError.BadRequest('You cannot add yourself as a friend');
-            }
-
             const friend = new FriendsModel({ user1: userId, user2: friendId });
             await friend.save();
             console.log('Added friend successfully');
