@@ -28,7 +28,6 @@ const EventModel = new Schema({
     followers: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     coOwners: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     isDuplicate: {type: Boolean, default: false},
-    originalEvent: { type: Schema.Types.ObjectId, ref: 'Event', default: null },
 });
 
 module.exports = model('Event', EventModel);
