@@ -55,6 +55,7 @@ class EventService {
     }
 
     async createEvent({ title, startDate, endDate, startTime, endTime, eventType, repeat, priority, coOwners, attendees, description, user }) {
+        console.log("createEvent", title, startDate, endDate, startTime, endTime, eventType, repeat, priority, coOwners, attendees, description, user)
         // Проверка входных данных
         if (!startTime || !endTime || !title || !user) {
             ApiError.BadRequest('All fields are required');

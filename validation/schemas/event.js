@@ -25,7 +25,6 @@ module.exports = {
         GET: {
             query: Joi.object({
                 year,
-                id: userId,
             }),
         },
         POST: {

@@ -14,7 +14,8 @@ class EventController {
 
     async getYearlyEventsForUser(req, res, next) {
         try {
-            const { id, year } = req.query;
+            const { year } = req.query;
+            const { id } = req.user;
             if (!year) {
                 throw ApiError.BadRequest('Year is not defined');
             }
@@ -28,8 +29,8 @@ class EventController {
     async createEvent(req, res, next) {
         try {
             const { title, startDate, endDate, startTime, endTime, eventType, repeat, priority, coOwners, attendees, description, user } = req.body;
-            console.log(eventType, repeat, priority)
-            const event = await eventService.createEvent({ title, startDate, endDate, startTime, endTime, eventType, repeat, priority, coOwners, attendees,description, user });
+            console.log(req.body)
+            const event = await eventService.createEvent({ title, startDate, endDate, startTime, endTime, eventType, repeat, priority, coOwners, attendees, description, user });
             return res.json(event);
         } catch (e) {
             next(e);
