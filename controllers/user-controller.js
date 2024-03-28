@@ -103,6 +103,7 @@ class UserController {
             }
 
             const user = await userService.addFriend(userId, id);
+            console.log(user);
             return res.json(user);
         } catch (e) {
             next(e);

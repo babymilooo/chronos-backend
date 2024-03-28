@@ -60,13 +60,13 @@ class UserService {
             const friendships = await FriendsModel.find({
                 $or: [{ user1: userId }, { user2: userId }]
             });
-    
-            const friendIds = friendships.map(friendship => 
+
+            const friendIds = friendships.map(friendship =>
                 friendship.user1.toString() === userId ? friendship.user2 : friendship.user1
             );
-    
+
             const friends = await UserModel.find({ _id: { $in: friendIds } });
-    
+
             const friendsData = await Promise.all(friends.map(async (friend) => {
                 const isFriend = await FriendsModel.findOne({
                     $or: [
@@ -74,15 +74,15 @@ class UserService {
                         { user1: friend._id, user2: myID }
                     ]
                 });
-    
+
                 return {
                     id: friend._id,
                     name: friend.username,
                     image: friend.image,
-                    isFriend: !!isFriend 
+                    isFriend: !!isFriend
                 };
             }));
-    
+
             return friendsData;
         } catch (e) {
             throw ApiError.BadRequest('Error getting friends');
@@ -112,6 +112,9 @@ class UserService {
         try {
             const friend = new FriendsModel({ user1: userId, user2: friendId });
             await friend.save();
+            const friendData = await this.getUserById(friendId);
+            console.log(friendData);
+            return friendData;
             console.log('Added friend successfully');
         } catch (error) {
             console.error('Error adding friend:', error);
@@ -120,10 +123,12 @@ class UserService {
 
     async removeFriend(userId, friendId) {
         try {
-            await FriendsModel.deleteOne({ $or: [
-                { user1: userId, user2: friendId },
-                { user1: friendId, user2: userId }
-            ] });
+            await FriendsModel.deleteOne({
+                $or: [
+                    { user1: userId, user2: friendId },
+                    { user1: friendId, user2: userId }
+                ]
+            });
             console.log('Removed friend successfully');
         } catch (error) {
             console.error('Error removing friend:', error);
