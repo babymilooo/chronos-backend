@@ -54,7 +54,7 @@ class EventService {
         return event;
     }
 
-    async createEvent({ title, startDate, endDate, startTime, endTime, eventType, repeat, priority, coOwners, attendees, user }) {
+    async createEvent({ title, startDate, endDate, startTime, endTime, eventType, repeat, priority, coOwners, attendees, description, user }) {
         // Проверка входных данных
         if (!startTime || !endTime || !title || !user) {
             ApiError.BadRequest('All fields are required');
@@ -87,7 +87,8 @@ class EventService {
                     repeat: repeat,
                     priority: priority,
                     coOwners,
-                    followers: attendees
+                    followers: attendees,
+                    description
                 });
                 console.log(event);
                 await event.save();
@@ -157,7 +158,8 @@ class EventService {
             repeat: repeat,
             priority: priority,
             coOwners,
-            followers: attendees
+            followers: attendees,
+            description
         }).save();
 
         const allUserIds = [user, ...coOwners, ...attendees];
