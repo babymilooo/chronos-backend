@@ -107,6 +107,10 @@ class AuthService {
             throw ApiError.NotFound(`User with email: \'${email}\' not registered`);
         }
 
+        if (!user.isActivated) {
+            throw ApiError.ForbiddenError('Account is not activated');
+        }
+
         const isPassEquals = await PasswordService.comparePasswords(password, user.password);
 
         if (!isPassEquals) {
