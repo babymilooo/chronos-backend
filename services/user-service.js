@@ -26,7 +26,6 @@ class UserService {
             user.image = 'default.png';
         }
 
-        user.image = 'http://localhost:5001/api/user/avatar/' + user.image;
         return new UserDto(user);
     }
 
@@ -79,7 +78,7 @@ class UserService {
                 return {
                     id: friend._id,
                     name: friend.username,
-                    image: friend.image ? `http://localhost:5001/api/user/avatar/${friend.image}` : 'http://localhost:5001/api/user/avatar/default.png',
+                    image: friend.image,
                     isFriend: !!isFriend 
                 };
             }));
